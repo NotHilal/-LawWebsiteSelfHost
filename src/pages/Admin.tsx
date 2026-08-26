@@ -65,8 +65,10 @@ function LoginView({ onLogin }: { onLogin: (token: string) => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.token) {
+        throw new Error(data.message || `Login failed (server returned ${res.status})`);
+      }
       localStorage.setItem(TOKEN_KEY, data.token);
       onLogin(data.token);
     } catch (err) {
