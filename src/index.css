@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette */
+  --color-summit-black: #0b0b0c;
+  --color-summit-charcoal: #151516;
+  --color-summit-graphite: #202022;
+  --color-summit-gold: #c99a59;
+  --color-summit-gold-soft: #d8af73;
+  --color-summit-ivory: #f5f0e8;
+  --color-summit-mute: #9a9288;
+  --color-summit-mute-dark: #6b655c;
+
+  /* Typography */
+  --font-serif: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", "Manrope", system-ui, sans-serif;
+
+  /* Motion */
+  --ease-summit: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  * {
+    @apply border-summit-graphite;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  body {
+    @apply bg-summit-black text-summit-ivory font-sans;
+    font-feature-settings: "liga" 1, "kern" 1;
+  }
+
+  ::selection {
+    background: var(--color-summit-gold);
+    color: var(--color-summit-black);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-serif;
+  }
+
+  a,
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-summit-gold);
+    outline-offset: 4px;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .gold-gradient-text {
+    background: linear-gradient(120deg, #c99a59 0%, #eccc93 45%, #c99a59 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
