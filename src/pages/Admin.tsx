@@ -54,7 +54,7 @@ function relativeTime(iso: string): string {
 export default function Admin() {
   useNoIndex();
 
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
+  const [token, setToken] = useState<string | null>(() => sessionStorage.getItem(TOKEN_KEY));
 
   if (!token) {
     return <LoginView onLogin={(t) => setToken(t)} />;
@@ -64,7 +64,7 @@ export default function Admin() {
     <RequestsView
       token={token}
       onLogout={() => {
-        localStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
         setToken(null);
       }}
     />
@@ -91,7 +91,7 @@ function LoginView({ onLogin }: { onLogin: (token: string) => void }) {
       if (!res.ok || !data.token) {
         throw new Error(data.message || `Login failed (server returned ${res.status})`);
       }
-      localStorage.setItem(TOKEN_KEY, data.token);
+      sessionStorage.setItem(TOKEN_KEY, data.token);
       onLogin(data.token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
