@@ -71,3 +71,8 @@ export async function markRequestRead(id: string, read: boolean) {
   const { error } = await db().from("requests").update({ read }).eq("id", id);
   if (error) throw error;
 }
+
+export async function deleteRequest(id: string) {
+  const { error } = await db().from("requests").delete().eq("id", id);
+  if (error) throw error;
+}

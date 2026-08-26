@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { isAuthorized } from "./_lib/auth.js";
-import { listRequests, markRequestRead } from "./_lib/db.js";
+import { listRequests, markRequestRead, deleteRequest } from "./_lib/db.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!isAuthorized(req)) {
@@ -19,6 +19,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ message: "Missing id or read" });
       }
       await markRequestRead(id, read);
+      return res.status(200).json({ ok: true });
+    }
+
+    if (req.method === "DELETE") {
+      const { id } = req.body ?? {};
+      if (typeof id !== "string") {
+        return res.status(400).json({ message: "Missing id" });
+      }
+      await deleteRequest(id);
       return res.status(200).json({ ok: true });
     }
 

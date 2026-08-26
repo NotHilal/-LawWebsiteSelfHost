@@ -1,5 +1,15 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Loader2, LogOut, Mail, Phone } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  ChevronLeft,
+  Inbox,
+  Loader2,
+  LogOut,
+  Mail,
+  Phone,
+  Search,
+  Trash2,
+} from "lucide-react";
+import { media } from "../data/media";
 
 type ContactRequest = {
   id: string;
@@ -27,6 +37,18 @@ function useNoIndex() {
       document.head.removeChild(meta);
     };
   }, []);
+}
+
+function relativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
 export default function Admin() {
@@ -79,61 +101,73 @@ function LoginView({ onLogin }: { onLogin: (token: string) => void }) {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-200px)] items-center justify-center bg-summit-black px-6 py-32">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.28em] text-summit-gold">Admin</p>
-          <h1 className="mt-3 font-serif text-2xl text-summit-ivory">Client Requests</h1>
+    <div className="flex min-h-screen items-center justify-center bg-summit-black px-6 py-32">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-sm border border-summit-graphite bg-summit-charcoal px-8 py-10 shadow-[0_0_60px_-15px_rgba(201,154,89,0.15)]"
+      >
+        <div className="flex flex-col items-center text-center">
+          <img src={media.emblem} alt="" role="presentation" className="h-10 w-auto opacity-90" />
+          <p className="mt-5 text-xs font-medium uppercase tracking-[0.28em] text-summit-gold">Admin</p>
+          <h1 className="mt-2 font-serif text-2xl text-summit-ivory">Client Requests</h1>
         </div>
 
-        <div>
-          <label htmlFor="admin-email" className="text-xs uppercase tracking-[0.16em] text-summit-mute">
-            Email
-          </label>
-          <input
-            id="admin-email"
-            type="email"
-            autoComplete="username"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border-0 border-b border-summit-graphite bg-transparent py-3 text-summit-ivory focus:border-summit-gold focus:outline-none"
-            required
-          />
+        <div className="mt-8 space-y-5">
+          <div>
+            <label htmlFor="admin-email" className="text-xs uppercase tracking-[0.16em] text-summit-mute">
+              Email
+            </label>
+            <input
+              id="admin-email"
+              type="email"
+              autoComplete="username"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border-0 border-b border-summit-graphite bg-transparent py-3 text-summit-ivory focus:border-summit-gold focus:outline-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="admin-password" className="text-xs uppercase tracking-[0.16em] text-summit-mute">
+              Password
+            </label>
+            <input
+              id="admin-password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border-0 border-b border-summit-graphite bg-transparent py-3 text-summit-ivory focus:border-summit-gold focus:outline-none"
+              required
+            />
+          </div>
+
+          {error && <p className="text-sm text-red-400">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex w-full items-center justify-center gap-3 bg-summit-gold px-8 py-4 text-xs font-medium uppercase tracking-[0.18em] text-summit-black transition-colors duration-300 hover:bg-summit-gold-soft disabled:opacity-60"
+          >
+            {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {loading ? "Signing in" : "Sign In"}
+          </button>
         </div>
-
-        <div>
-          <label htmlFor="admin-password" className="text-xs uppercase tracking-[0.16em] text-summit-mute">
-            Password
-          </label>
-          <input
-            id="admin-password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border-0 border-b border-summit-graphite bg-transparent py-3 text-summit-ivory focus:border-summit-gold focus:outline-none"
-            required
-          />
-        </div>
-
-        {error && <p className="text-sm text-red-400">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="inline-flex w-full items-center justify-center gap-3 bg-summit-gold px-8 py-4 text-xs font-medium uppercase tracking-[0.18em] text-summit-black transition-colors duration-300 hover:bg-summit-gold-soft disabled:opacity-60"
-        >
-          {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-          {loading ? "Signing in" : "Sign In"}
-        </button>
       </form>
     </div>
   );
 }
 
+type Filter = "all" | "unread";
+
 function RequestsView({ token, onLogout }: { token: string; onLogout: () => void }) {
   const [requests, setRequests] = useState<ContactRequest[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
+  const [deleting, setDeleting] = useState(false);
 
   async function load() {
     setStatus("loading");
@@ -159,6 +193,23 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return requests.filter((r) => {
+      if (filter === "unread" && r.read) return false;
+      if (!q) return true;
+      return (
+        r.name.toLowerCase().includes(q) ||
+        r.email.toLowerCase().includes(q) ||
+        (r.organization ?? "").toLowerCase().includes(q) ||
+        r.message.toLowerCase().includes(q)
+      );
+    });
+  }, [requests, query, filter]);
+
+  const selected = requests.find((r) => r.id === selectedId) ?? null;
+  const unreadCount = requests.filter((r) => !r.read).length;
+
   async function toggleRead(req: ContactRequest) {
     setRequests((prev) => prev.map((r) => (r.id === req.id ? { ...r, read: !r.read } : r)));
     await fetch("/api/requests", {
@@ -168,83 +219,224 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
     });
   }
 
+  async function handleDelete(req: ContactRequest) {
+    if (!confirm(`Delete the request from ${req.name}? This can't be undone.`)) return;
+    setDeleting(true);
+    try {
+      await fetch("/api/requests", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id: req.id }),
+      });
+      setRequests((prev) => prev.filter((r) => r.id !== req.id));
+      setSelectedId(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function openRequest(req: ContactRequest) {
+    setSelectedId(req.id);
+    if (!req.read) toggleRead(req);
+  }
+
   return (
-    <div className="min-h-screen bg-summit-black px-6 py-28 sm:px-10 sm:py-32 lg:px-14">
-      <div className="mx-auto max-w-5xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.28em] text-summit-gold">Admin</p>
-            <h1 className="mt-3 font-serif text-2xl text-summit-ivory">Client Requests</h1>
-          </div>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-summit-mute transition-colors hover:text-summit-gold"
+    <div className="flex min-h-screen flex-col bg-summit-black">
+      <header className="flex flex-none flex-wrap items-center justify-between gap-4 border-b border-summit-graphite px-6 py-5 sm:px-10">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.28em] text-summit-gold">Admin</p>
+          <h1 className="mt-1 font-serif text-xl text-summit-ivory">
+            Client Requests
+            {status === "ready" && (
+              <span className="ml-3 align-middle text-sm font-sans text-summit-mute">
+                {requests.length} total{unreadCount > 0 && ` · ${unreadCount} unread`}
+              </span>
+            )}
+          </h1>
+        </div>
+        <button
+          type="button"
+          onClick={onLogout}
+          className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-summit-mute transition-colors hover:text-summit-gold"
+        >
+          <LogOut className="h-4 w-4" aria-hidden="true" />
+          Log Out
+        </button>
+      </header>
+
+      {status === "loading" && (
+        <div className="flex flex-1 items-center justify-center text-sm text-summit-mute">
+          <Loader2 className="mr-3 h-4 w-4 animate-spin" aria-hidden="true" />
+          Loading…
+        </div>
+      )}
+
+      {status === "error" && (
+        <div className="flex flex-1 items-center justify-center text-sm text-red-400">Couldn&rsquo;t load requests.</div>
+      )}
+
+      {status === "ready" && (
+        <div className="grid flex-1 grid-cols-1 lg:grid-cols-[380px_1fr]">
+          {/* List column */}
+          <div
+            className={`flex flex-col border-summit-graphite lg:border-r ${
+              selected ? "hidden lg:flex" : "flex"
+            }`}
           >
-            <LogOut className="h-4 w-4" aria-hidden="true" />
-            Log Out
-          </button>
-        </div>
-
-        <div className="mt-12 space-y-4">
-          {status === "loading" && <p className="text-sm text-summit-mute">Loading…</p>}
-          {status === "error" && <p className="text-sm text-red-400">Couldn&rsquo;t load requests.</p>}
-          {status === "ready" && requests.length === 0 && (
-            <p className="text-sm text-summit-mute">No requests yet.</p>
-          )}
-
-          {requests.map((req) => (
-            <div
-              key={req.id}
-              className={`border px-6 py-5 transition-colors ${
-                req.read ? "border-summit-graphite" : "border-summit-gold/40 bg-summit-gold/5"
-              }`}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="font-serif text-lg text-summit-ivory">
-                    {req.name}
-                    {req.title && <span className="text-summit-mute">, {req.title}</span>}
-                  </p>
-                  {req.organization && <p className="text-sm text-summit-mute">{req.organization}</p>}
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-xs text-summit-mute-dark">
-                    {new Date(req.created_at).toLocaleString()}
-                  </span>
+            <div className="flex-none space-y-3 border-b border-summit-graphite p-4">
+              <div className="relative">
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-summit-mute-dark"
+                  aria-hidden="true"
+                />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search name, email, message…"
+                  className="w-full border border-summit-graphite bg-transparent py-2 pl-9 pr-3 text-sm text-summit-ivory placeholder:text-summit-mute-dark focus:border-summit-gold focus:outline-none"
+                />
+              </div>
+              <div className="flex gap-2">
+                {(["all", "unread"] as Filter[]).map((f) => (
                   <button
+                    key={f}
                     type="button"
-                    onClick={() => toggleRead(req)}
-                    className="border border-summit-graphite px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.14em] text-summit-mute transition-colors hover:border-summit-gold hover:text-summit-gold"
+                    onClick={() => setFilter(f)}
+                    className={`border px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.14em] transition-colors ${
+                      filter === f
+                        ? "border-summit-gold text-summit-gold"
+                        : "border-summit-graphite text-summit-mute hover:text-summit-ivory"
+                    }`}
                   >
-                    {req.read ? "Mark unread" : "Mark read"}
+                    {f === "all" ? "All" : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ""}`}
                   </button>
-                </div>
+                ))}
               </div>
-
-              <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-summit-ivory/80">
-                <a href={`mailto:${req.email}`} className="flex items-center gap-2 hover:text-summit-gold">
-                  <Mail className="h-3.5 w-3.5" aria-hidden="true" />
-                  {req.email}
-                </a>
-                {req.phone && (
-                  <a href={`tel:${req.phone}`} className="flex items-center gap-2 hover:text-summit-gold">
-                    <Phone className="h-3.5 w-3.5" aria-hidden="true" />
-                    {req.phone}
-                  </a>
-                )}
-                {req.interest && (
-                  <span className="text-summit-mute-dark">{req.interest}</span>
-                )}
-              </div>
-
-              <p className="mt-4 max-w-3xl whitespace-pre-wrap text-sm leading-relaxed text-summit-ivory/70">
-                {req.message}
-              </p>
             </div>
-          ))}
+
+            <div className="flex-1 overflow-y-auto">
+              {filtered.length === 0 && (
+                <div className="flex flex-col items-center gap-3 px-6 py-16 text-center text-summit-mute">
+                  <Inbox className="h-8 w-8 text-summit-mute-dark" aria-hidden="true" />
+                  <p className="text-sm">{requests.length === 0 ? "No requests yet." : "No matches."}</p>
+                </div>
+              )}
+              {filtered.map((req) => (
+                <button
+                  key={req.id}
+                  type="button"
+                  onClick={() => openRequest(req)}
+                  className={`block w-full border-b border-summit-graphite px-5 py-4 text-left transition-colors hover:bg-summit-charcoal ${
+                    selectedId === req.id ? "bg-summit-charcoal" : ""
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex min-w-0 items-center gap-2">
+                      {!req.read && <span className="h-1.5 w-1.5 flex-none rounded-full bg-summit-gold" aria-hidden="true" />}
+                      <span className={`truncate font-serif text-base ${req.read ? "text-summit-ivory/80" : "text-summit-ivory"}`}>
+                        {req.name}
+                      </span>
+                    </span>
+                    <span className="flex-none text-[0.65rem] text-summit-mute-dark">{relativeTime(req.created_at)}</span>
+                  </div>
+                  {req.organization && (
+                    <p className="mt-0.5 truncate text-xs text-summit-mute">{req.organization}</p>
+                  )}
+                  <p className="mt-1.5 truncate text-xs text-summit-mute-dark">{req.message}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Detail column */}
+          <div className={`flex-col ${selected ? "flex" : "hidden lg:flex"}`}>
+            {!selected && (
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 text-summit-mute-dark">
+                <Inbox className="h-10 w-10" aria-hidden="true" />
+                <p className="text-sm">Select a request to view details.</p>
+              </div>
+            )}
+
+            {selected && (
+              <div className="flex-1 overflow-y-auto px-6 py-6 sm:px-10 sm:py-8">
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(null)}
+                  className="mb-6 inline-flex items-center gap-1 text-xs uppercase tracking-[0.14em] text-summit-mute hover:text-summit-gold lg:hidden"
+                >
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                  Back
+                </button>
+
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h2 className="font-serif text-2xl text-summit-ivory">
+                      {selected.name}
+                      {selected.title && <span className="text-summit-mute">, {selected.title}</span>}
+                    </h2>
+                    {selected.organization && <p className="mt-1 text-sm text-summit-mute">{selected.organization}</p>}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleRead(selected)}
+                      className="border border-summit-graphite px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.14em] text-summit-mute transition-colors hover:border-summit-gold hover:text-summit-gold"
+                    >
+                      {selected.read ? "Mark unread" : "Mark read"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(selected)}
+                      disabled={deleting}
+                      aria-label="Delete request"
+                      className="border border-summit-graphite p-2 text-summit-mute transition-colors hover:border-red-400/60 hover:text-red-400 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+
+                <p className="mt-2 text-xs text-summit-mute-dark">
+                  {new Date(selected.created_at).toLocaleString(undefined, {
+                    dateStyle: "long",
+                    timeStyle: "short",
+                  })}
+                </p>
+
+                <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-summit-graphite py-4 text-sm text-summit-ivory/80">
+                  <a href={`mailto:${selected.email}`} className="flex items-center gap-2 hover:text-summit-gold">
+                    <Mail className="h-3.5 w-3.5" aria-hidden="true" />
+                    {selected.email}
+                  </a>
+                  {selected.phone && (
+                    <a href={`tel:${selected.phone}`} className="flex items-center gap-2 hover:text-summit-gold">
+                      <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                      {selected.phone}
+                    </a>
+                  )}
+                  {selected.interest && (
+                    <span className="border border-summit-graphite px-2.5 py-1 text-[0.65rem] uppercase tracking-[0.14em] text-summit-mute">
+                      {selected.interest}
+                    </span>
+                  )}
+                </div>
+
+                <p className="mt-6 max-w-2xl whitespace-pre-wrap text-sm leading-relaxed text-summit-ivory/85">
+                  {selected.message}
+                </p>
+
+                <a
+                  href={`mailto:${selected.email}?subject=${encodeURIComponent(`Re: your enquiry to Summit Management Consultancy`)}`}
+                  className="mt-8 inline-flex items-center gap-3 bg-summit-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.16em] text-summit-black transition-colors duration-300 hover:bg-summit-gold-soft"
+                >
+                  Reply by Email
+                </a>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
