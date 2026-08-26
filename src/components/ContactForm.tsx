@@ -171,9 +171,10 @@ export default function ContactForm() {
           <input
             id="phone"
             type="tel"
+            inputMode="tel"
             autoComplete="tel"
             value={form.phone}
-            onChange={(e) => update("phone", e.target.value)}
+            onChange={(e) => update("phone", e.target.value.replace(/[^\d+\s()-]/g, ""))}
             className={inputClasses}
           />
         </div>
