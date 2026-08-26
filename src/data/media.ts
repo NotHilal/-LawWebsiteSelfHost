@@ -5,6 +5,7 @@
  */
 import emblem from "../assets/emblem.webp";
 import portrait from "../assets/portrait.webp";
+import heroPortrait from "../assets/hero-portrait.jpg";
 import awardLexisNexis from "../assets/award-lexisnexis.webp";
 import awardQatarBLF from "../assets/award-qatar-blf.webp";
 import type { RecognitionItem } from "./siteContent";
@@ -12,6 +13,7 @@ import type { RecognitionItem } from "./siteContent";
 export const media = {
   emblem,
   portrait,
+  heroPortrait,
   awardLexisNexis,
   awardQatarBLF,
 };

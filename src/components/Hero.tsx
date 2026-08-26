@@ -118,10 +118,10 @@ export default function Hero() {
               }}
             />
             <img
-              src={media.portrait}
+              src={media.heroPortrait}
               alt="Portrait of Soukeina Awdeh, Founder and Lead Advisor at Summit Management Consultancy"
               className="h-full w-full object-cover"
-              style={{ objectPosition: "50% 100%", transform: "scale(2.15)" }}
+              style={{ objectPosition: "50% 20%" }}
               loading="eager"
               fetchPriority="high"
             />
