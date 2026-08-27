@@ -17,54 +17,6 @@ const GREETING: ChatMessage = {
     "Hello — I'm the Summit assistant. Ask me about our practice areas or how to book a consultation. I'm not a lawyer and can't give legal advice.",
 };
 
-const CONSULTATION_INTENT_KEYWORDS = [
-  "consult",
-  "book",
-  "appointment",
-  "schedule",
-  "meeting",
-  "request",
-  "callback",
-  "call back",
-  "talk to someone",
-  "speak to someone",
-  "speak with someone",
-  "get in touch",
-  "reach out",
-  "contact your team",
-  "contact the team",
-  "help",
-  "assist",
-  "project",
-];
-
-// Once the assistant is actually collecting intake details, its own wording is a far
-// more reliable signal than guessing intent from however the visitor first phrased it.
-const INTAKE_IN_PROGRESS_PHRASES = [
-  "full name",
-  "your name",
-  "email address",
-  "what you need help with",
-  "what you're looking for help with",
-  "brief description",
-  "briefly describe",
-  "which of our practice areas",
-  "area of interest",
-  "consultation request",
-  "send this to our team",
-  "send this consultation request",
-];
-
-function hasRequestedConsultation(messages: ChatMessage[]): boolean {
-  return messages.some((m) => {
-    const text = m.content.toLowerCase();
-    if (m.role === "user") {
-      return CONSULTATION_INTENT_KEYWORDS.some((keyword) => text.includes(keyword));
-    }
-    return INTAKE_IN_PROGRESS_PHRASES.some((phrase) => text.includes(phrase));
-  });
-}
-
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
@@ -76,17 +28,7 @@ export default function ChatWidget() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, isOpen]);
-
-  // No reliable way to detect the exact moment the model asks for a category — its
-  // phrasing (and even whether it lists the options verbatim) varies too much to
-  // pattern-match. Opening as soon as intake starts trades a little earliness for
-  // never missing the moment that actually matters.
-  useEffect(() => {
-    if (hasRequestedConsultation(messages)) {
-      setShowPicker(true);
-    }
-  }, [messages]);
+  }, [messages, isOpen, showPicker]);
 
   async function sendMessage(text: string) {
     if (!text || loading) return;
@@ -115,6 +57,9 @@ export default function ChatWidget() {
         ...prev,
         { id: crypto.randomUUID(), role: "assistant", content: data.reply as string },
       ]);
+      // The server explicitly signals when to show the picker — via the model's own
+      // function call — rather than the client guessing from the reply's wording.
+      setShowPicker(data.showCategoryPicker === true);
     } catch {
       setError("Couldn't reach the assistant. Please try again in a moment.");
     } finally {
@@ -194,18 +139,23 @@ export default function ChatWidget() {
             </div>
 
             {showPicker && (
-              <div className="flex flex-wrap gap-2 border-t border-summit-graphite px-3 pb-3 pt-3">
-                {areasOfInterest.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => sendMessage(option)}
-                    disabled={loading}
-                    className="rounded-full border border-summit-gold/60 px-3 py-1.5 text-xs text-summit-ivory transition-colors hover:border-summit-gold hover:bg-summit-gold/10 disabled:opacity-40"
-                  >
-                    {option}
-                  </button>
-                ))}
+              <div className="border-t border-summit-graphite px-3 pb-3 pt-3">
+                <p className="mb-2 text-[11px] uppercase tracking-[0.14em] text-summit-mute">
+                  Choose the category that matches most your request
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {areasOfInterest.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => sendMessage(option)}
+                      disabled={loading}
+                      className="rounded-full border border-summit-gold/60 px-3 py-1.5 text-xs text-summit-ivory transition-colors hover:border-summit-gold hover:bg-summit-gold/10 disabled:opacity-40"
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 

@@ -26,10 +26,17 @@ const AREAS_OF_INTEREST = [
   "Other",
 ];
 
+const presentCategoryChoices = {
+  name: "present_category_choices",
+  description:
+    "Call this once you have the visitor's name, email, and a real description of what they need help with, right when you are ready to ask which category fits best. Do not list the category options in your text reply — the interface displays them. Just briefly say you're ready for them to pick one.",
+  parameters: { type: "object", properties: {} },
+};
+
 const submitConsultationRequest = {
   name: "submit_consultation_request",
   description:
-    "Submits a consultation request to the Summit Management Consultancy team once the visitor has provided their name, email, and what they need help with, and has explicitly confirmed they want to send it.",
+    "Submits a consultation request to the Summit Management Consultancy team once the visitor has provided their name, email, a description, and a category, and has explicitly confirmed they want to send it.",
   parameters: {
     type: "object",
     properties: {
@@ -55,12 +62,12 @@ const submitConsultationRequest = {
 const SYSTEM_INSTRUCTION =
   "You are an assistant for Summit Management Consultancy, based in Doha, Qatar. Answer general questions about practice areas. You are not a lawyer and do not give legal advice. Never ask for confidential case details. " +
   "You cannot book, schedule, or confirm appointments yourself, and you have no calendar access — never say you will check availability or confirm a booking. " +
-  "When a visitor wants a consultation, gather what's needed through natural conversation, asking one question at a time: their name, email, a brief description of what they need help with, and which category best fits their need are all required. " +
+  "When a visitor wants a consultation, collect these in this exact order, asking only one at a time and waiting for their reply before moving on: (1) their full name, (2) their email, (3) a brief description of what they need help with. " +
   "Apply the same scrutiny to every field, not just email: if the name is a single letter or clearly not a real name, or the description is too short or vague to tell the team anything useful (like one or two words), ask them to confirm or provide more detail before moving on. " +
-  `For the category, ask which of these fits best: ${AREAS_OF_INTEREST.join(", ")}. There's also a list icon next to the message box the visitor can tap to pick one instead of typing — you can mention that once. Only use a value from this exact list when you call the function. ` +
-  "Organization, title, and phone are optional — only ask if it flows naturally. " +
-  "Before submitting, summarize back what you've gathered and ask the visitor to confirm they want to send it. Only call submit_consultation_request after they explicitly confirm. " +
-  "After it's submitted, tell them the team will follow up directly — make clear this is a request for someone to reach out, not a confirmed appointment time. " +
+  "Once you have all three, call present_category_choices — do not type out the category list yourself. " +
+  "After the visitor picks a category (their next message will be one of the exact option strings), summarize everything you've gathered including the category and ask them to confirm they want to send it. Only call submit_consultation_request after they explicitly confirm. " +
+  "Organization, title, and phone are optional — only ask if it flows naturally, before calling present_category_choices. " +
+  "After submit_consultation_request succeeds, tell them the team will follow up directly — make clear this is a request for someone to reach out, not a confirmed appointment time. " +
   "Reply in plain conversational text only: no markdown, no asterisks, no bullet points or numbered lists, no headers. Keep responses short — a few sentences at most.";
 
 type ChatTurn = { role: "user" | "assistant"; content: string };
@@ -98,7 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const config = {
     systemInstruction: SYSTEM_INSTRUCTION,
-    tools: [{ functionDeclarations: [submitConsultationRequest] }],
+    tools: [{ functionDeclarations: [presentCategoryChoices, submitConsultationRequest] }],
     toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
   };
 
@@ -111,56 +118,75 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     const call = response.functionCalls?.[0];
-    if (!call || call.name !== "submit_consultation_request") {
+    if (!call) {
       return res.status(200).json({ reply: response.text });
     }
 
-    const args = (call.args ?? {}) as Record<string, string | undefined>;
-    let submitted = true;
-    if (!args.name?.trim() || !args.email?.trim() || !args.message?.trim() || !args.interest?.trim()) {
-      submitted = false;
-    } else {
-      await insertRequest({
-        id: crypto.randomUUID(),
-        name: args.name.trim(),
-        organization: args.organization?.trim() ?? "",
-        title: args.title?.trim() ?? "",
-        email: args.email.trim(),
-        phone: args.phone?.trim() ?? "",
-        interest: args.interest?.trim() ?? "",
-        message: args.message.trim(),
-        created_at: new Date().toISOString(),
-      });
+    if (call.name === "present_category_choices") {
+      const followUp = await runFunctionResponseTurn(contents, response, call.name, { acknowledged: true });
+      return res.status(200).json({ reply: followUp, showCategoryPicker: true });
     }
 
-    const modelTurn = response.candidates?.[0]?.content;
-    const followUpContents: Content[] = [
-      ...contents,
-      ...(modelTurn ? [modelTurn] : []),
-      {
-        role: "user",
-        parts: [
-          {
-            functionResponse: {
-              name: call.name,
-              response: submitted
-                ? { success: true }
-                : { success: false, error: "Missing required fields: name, email, message, or interest." },
-            },
-          },
-        ],
-      },
-    ];
+    if (call.name === "submit_consultation_request") {
+      const args = (call.args ?? {}) as Record<string, string | undefined>;
+      const submitted = !!(args.name?.trim() && args.email?.trim() && args.message?.trim() && args.interest?.trim());
 
-    const followUp = await ai().models.generateContent({
-      model: "gemini-flash-lite-latest",
-      contents: followUpContents,
-      config,
-    });
+      if (submitted) {
+        await insertRequest({
+          id: crypto.randomUUID(),
+          name: args.name!.trim(),
+          organization: args.organization?.trim() ?? "",
+          title: args.title?.trim() ?? "",
+          email: args.email!.trim(),
+          phone: args.phone?.trim() ?? "",
+          interest: args.interest!.trim(),
+          message: args.message!.trim(),
+          created_at: new Date().toISOString(),
+        });
+      }
 
-    return res.status(200).json({ reply: followUp.text });
+      const followUp = await runFunctionResponseTurn(
+        contents,
+        response,
+        call.name,
+        submitted
+          ? { success: true }
+          : { success: false, error: "Missing required fields: name, email, message, or interest." },
+      );
+      return res.status(200).json({ reply: followUp });
+    }
+
+    return res.status(200).json({ reply: response.text });
   } catch (error) {
     console.error("[api/chat] generate failed", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
+}
+
+async function runFunctionResponseTurn(
+  contents: Content[],
+  response: Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>,
+  functionName: string,
+  functionResult: Record<string, unknown>,
+): Promise<string> {
+  const modelTurn = response.candidates?.[0]?.content;
+  const followUpContents: Content[] = [
+    ...contents,
+    ...(modelTurn ? [modelTurn] : []),
+    {
+      role: "user",
+      parts: [{ functionResponse: { name: functionName, response: functionResult } }],
+    },
+  ];
+
+  const followUp = await ai().models.generateContent({
+    model: "gemini-flash-lite-latest",
+    contents: followUpContents,
+    config: {
+      systemInstruction: SYSTEM_INSTRUCTION,
+      tools: [{ functionDeclarations: [presentCategoryChoices, submitConsultationRequest] }],
+      toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
+    },
+  });
+  return followUp.text ?? "";
 }
