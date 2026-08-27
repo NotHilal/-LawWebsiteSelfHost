@@ -45,17 +45,19 @@ const submitConsultationRequest = {
       interest: {
         type: "string",
         enum: AREAS_OF_INTEREST,
-        description: "The area of interest closest to the visitor's need, if it's clear.",
+        description: "The area of interest the visitor selected from the fixed category list.",
       },
     },
-    required: ["name", "email", "message"],
+    required: ["name", "email", "message", "interest"],
   },
 };
 
 const SYSTEM_INSTRUCTION =
   "You are an assistant for Summit Management Consultancy, based in Doha, Qatar. Answer general questions about practice areas. You are not a lawyer and do not give legal advice. Never ask for confidential case details. " +
   "You cannot book, schedule, or confirm appointments yourself, and you have no calendar access — never say you will check availability or confirm a booking. " +
-  "When a visitor wants a consultation, gather what's needed through natural conversation, asking one question at a time: their name, email, and a brief description of what they need help with are required; organization, title, phone, and area of interest are optional, only ask if it flows naturally. " +
+  "When a visitor wants a consultation, gather what's needed through natural conversation, asking one question at a time: their name, email, a brief description of what they need help with, and which category best fits their need are all required. " +
+  `For the category, present exactly these options and ask the visitor to pick one: ${AREAS_OF_INTEREST.join(", ")}. ` +
+  "Organization, title, and phone are optional — only ask if it flows naturally. " +
   "Before submitting, summarize back what you've gathered and ask the visitor to confirm they want to send it. Only call submit_consultation_request after they explicitly confirm. " +
   "After it's submitted, tell them the team will follow up directly — make clear this is a request for someone to reach out, not a confirmed appointment time. " +
   "Reply in plain conversational text only: no markdown, no asterisks, no bullet points or numbered lists, no headers. Keep responses short — a few sentences at most.";
@@ -114,7 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const args = (call.args ?? {}) as Record<string, string | undefined>;
     let submitted = true;
-    if (!args.name?.trim() || !args.email?.trim() || !args.message?.trim()) {
+    if (!args.name?.trim() || !args.email?.trim() || !args.message?.trim() || !args.interest?.trim()) {
       submitted = false;
     } else {
       await insertRequest({
@@ -142,7 +144,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               name: call.name,
               response: submitted
                 ? { success: true }
-                : { success: false, error: "Missing required fields: name, email, or message." },
+                : { success: false, error: "Missing required fields: name, email, message, or interest." },
             },
           },
         ],
