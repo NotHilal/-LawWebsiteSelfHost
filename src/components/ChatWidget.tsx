@@ -1,8 +1,33 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Send, X } from "lucide-react";
 import { media } from "../data/media";
 import { areasOfInterest } from "../data/siteContent";
+
+const ASK_QUESTION_PATH = "/ask-a-question";
+
+// The model is instructed to include the bare path (never markdown link syntax)
+// when it can't answer something, so the visitor gets an actual clickable link
+// rather than a dead string of text.
+function renderMessageContent(content: string): ReactNode {
+  if (!content.includes(ASK_QUESTION_PATH)) return content;
+  const parts = content.split(ASK_QUESTION_PATH);
+  const nodes: ReactNode[] = [parts[0]];
+  for (let i = 1; i < parts.length; i++) {
+    nodes.push(
+      <Link
+        key={i}
+        to={ASK_QUESTION_PATH}
+        className="font-medium text-summit-gold underline decoration-summit-gold/50 underline-offset-2 hover:text-summit-gold-soft"
+      >
+        Ask a Question
+      </Link>,
+    );
+    nodes.push(parts[i]);
+  }
+  return nodes;
+}
 
 type ChatMessage = {
   id: string;
@@ -132,7 +157,7 @@ export default function ChatWidget() {
                         : "bg-summit-graphite text-summit-ivory"
                     }`}
                   >
-                    {m.content}
+                    {renderMessageContent(m.content)}
                   </div>
                 </div>
               ))}
