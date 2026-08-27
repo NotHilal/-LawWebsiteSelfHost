@@ -65,17 +65,6 @@ function hasRequestedConsultation(messages: ChatMessage[]): boolean {
   });
 }
 
-// How the assistant *introduces* the category question varies too much to pattern-match
-// reliably. But the system prompt forces it to list the category names verbatim, so
-// checking for those (not the surrounding phrasing) is the robust signal.
-function isAskingForCategory(messages: ChatMessage[]): boolean {
-  const last = messages[messages.length - 1];
-  if (!last || last.role !== "assistant") return false;
-  const text = last.content.toLowerCase();
-  const matches = areasOfInterest.filter((option) => text.includes(option.toLowerCase()));
-  return matches.length >= 4;
-}
-
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
@@ -89,8 +78,12 @@ export default function ChatWidget() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isOpen]);
 
+  // No reliable way to detect the exact moment the model asks for a category — its
+  // phrasing (and even whether it lists the options verbatim) varies too much to
+  // pattern-match. Opening as soon as intake starts trades a little earliness for
+  // never missing the moment that actually matters.
   useEffect(() => {
-    if (isAskingForCategory(messages)) {
+    if (hasRequestedConsultation(messages)) {
       setShowPicker(true);
     }
   }, [messages]);
