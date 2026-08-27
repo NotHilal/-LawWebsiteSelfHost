@@ -20,6 +20,7 @@ import Admin from "./pages/Admin";
 
 export default function App() {
   const location = useLocation();
+  const isAdmin = location.pathname === "/admin";
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -31,7 +32,7 @@ export default function App() {
       </a>
       <StructuredData />
       <ScrollToTop />
-      <Navbar />
+      {!isAdmin && <Navbar />}
       <main id="main-content" className="flex-1">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
@@ -119,8 +120,8 @@ export default function App() {
           </Routes>
         </AnimatePresence>
       </main>
-      <Footer />
-      {location.pathname !== "/admin" && <ChatWidget />}
+      {!isAdmin && <Footer />}
+      {!isAdmin && <ChatWidget />}
     </div>
   );
 }
