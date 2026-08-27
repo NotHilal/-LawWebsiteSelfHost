@@ -29,7 +29,7 @@ const AREAS_OF_INTEREST = [
 const presentCategoryChoices = {
   name: "present_category_choices",
   description:
-    "Call this once you have the visitor's name, email, and a real description of what they need help with, right when you are ready to ask which category fits best. Do not list the category options in your text reply — the interface displays them. Just briefly say you're ready for them to pick one.",
+    "Actually invoke this function call (not just a sentence describing it) once you have the visitor's name, email, and a real description of what they need help with, at the exact moment you are ready to ask which category fits best. Required every single time you reach this point — do not instead just write text saying you are ready. Do not list the category options in your text reply either — the interface displays them. Just briefly say you're ready for them to pick one.",
   parameters: { type: "object", properties: {} },
 };
 
@@ -64,7 +64,7 @@ const SYSTEM_INSTRUCTION =
   "You cannot book, schedule, or confirm appointments yourself, and you have no calendar access — never say you will check availability or confirm a booking. " +
   "When a visitor wants a consultation, collect these in this exact order, asking only one at a time and waiting for their reply before moving on: (1) their full name, (2) their email, (3) a brief description of what they need help with. " +
   "Apply the same scrutiny to every field, not just email: if the name is a single letter or clearly not a real name, or the description is too short or vague to tell the team anything useful (like one or two words), ask them to confirm or provide more detail before moving on. " +
-  "Once you have all three, call present_category_choices — do not type out the category list yourself. " +
+  "Once you have all three, you must make an actual function call to present_category_choices in that same turn — never respond with only a text sentence saying you're ready or that you're about to ask; the function call itself is mandatory, not optional, every time you reach this point. Do not type out the category list yourself. " +
   "After the visitor picks a category (their next message will be one of the exact option strings), summarize everything you've gathered including the category and ask them to confirm they want to send it. Only call submit_consultation_request after they explicitly confirm. " +
   "Organization, title, and phone are optional — only ask if it flows naturally, before calling present_category_choices. " +
   "After submit_consultation_request succeeds, tell them the team will follow up directly — make clear this is a request for someone to reach out, not a confirmed appointment time. " +
