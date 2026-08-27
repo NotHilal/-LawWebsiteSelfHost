@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import {
+  ArrowLeft,
   ChevronLeft,
   Inbox,
   Loader2,
@@ -104,7 +106,14 @@ function LoginView({ onLogin }: { onLogin: (token: string) => void }) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-summit-black px-6 py-32">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-summit-black px-6 py-32">
+      <Link
+        to="/"
+        className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-summit-mute transition-colors hover:text-summit-gold"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+        Back to Homepage
+      </Link>
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm border border-summit-graphite bg-summit-charcoal px-8 py-10 shadow-[0_0_60px_-15px_rgba(201,154,89,0.15)]"
@@ -260,7 +269,14 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
     <div className="flex min-h-screen flex-col bg-summit-black">
       <header className="flex flex-none flex-wrap items-center justify-between gap-4 border-b border-summit-graphite px-6 py-5 sm:px-10">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.28em] text-summit-gold">Admin</p>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-summit-mute transition-colors hover:text-summit-gold"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            Back to Homepage
+          </Link>
+          <p className="mt-3 text-xs font-medium uppercase tracking-[0.28em] text-summit-gold">Admin</p>
           <h1 className="mt-1 font-serif text-xl text-summit-ivory">
             {tab === "consultation" ? "Client Requests" : "Questions"}
             {status === "ready" && (
