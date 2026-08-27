@@ -25,10 +25,19 @@ export default function ChatWidget() {
   const [error, setError] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isOpen, showPicker]);
+
+  // The input is disabled while loading, so refocus once it's enabled again rather
+  // than right after sending — focusing a disabled field is a no-op.
+  useEffect(() => {
+    if (!loading && isOpen) {
+      inputRef.current?.focus();
+    }
+  }, [loading, isOpen]);
 
   async function sendMessage(text: string) {
     if (!text || loading) return;
@@ -140,9 +149,19 @@ export default function ChatWidget() {
 
             {showPicker && (
               <div className="border-t border-summit-graphite px-3 pb-3 pt-3">
-                <p className="mb-2 text-[11px] uppercase tracking-[0.14em] text-summit-mute">
-                  Choose the category that matches most your request
-                </p>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-summit-mute">
+                    Choose the category that matches most your request
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowPicker(false)}
+                    aria-label="Dismiss category options"
+                    className="shrink-0 rounded-full p-1 text-summit-mute transition-colors hover:bg-summit-graphite hover:text-summit-ivory"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {areasOfInterest.map((option) => (
                     <button
@@ -164,6 +183,7 @@ export default function ChatWidget() {
               className={`flex items-center gap-2 p-3 ${showPicker ? "" : "border-t border-summit-graphite"}`}
             >
               <input
+                ref={inputRef}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
