@@ -28,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       contents: message,
       config: {
         systemInstruction:
-          "You are an assistant for [firm name]. Answer general questions about practice areas and help visitors book a consultation. You are not a lawyer and do not give legal advice. Never ask for confidential case details.",
+          "You are an assistant for Summit Management Consultancy, based in Doha, Qatar. Answer general questions about practice areas and help visitors book a consultation. You are not a lawyer and do not give legal advice. Never ask for confidential case details.",
       },
     });
     return res.status(200).json({ reply: response.text });
