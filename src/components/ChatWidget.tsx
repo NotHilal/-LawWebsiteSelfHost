@@ -65,16 +65,15 @@ function hasRequestedConsultation(messages: ChatMessage[]): boolean {
   });
 }
 
-// Narrower than INTAKE_IN_PROGRESS_PHRASES: specifically the category question itself,
-// so the picker can auto-open right when it's relevant instead of waiting for a tap.
-// "of interest" (not "area of interest") deliberately avoids missing the plural "areas of interest".
-const CATEGORY_QUESTION_PHRASES = ["of interest", "practice areas", "practice area that"];
-
+// How the assistant *introduces* the category question varies too much to pattern-match
+// reliably. But the system prompt forces it to list the category names verbatim, so
+// checking for those (not the surrounding phrasing) is the robust signal.
 function isAskingForCategory(messages: ChatMessage[]): boolean {
   const last = messages[messages.length - 1];
   if (!last || last.role !== "assistant") return false;
   const text = last.content.toLowerCase();
-  return CATEGORY_QUESTION_PHRASES.some((phrase) => text.includes(phrase));
+  const matches = areasOfInterest.filter((option) => text.includes(option.toLowerCase()));
+  return matches.length >= 4;
 }
 
 export default function ChatWidget() {
