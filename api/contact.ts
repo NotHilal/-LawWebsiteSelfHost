@@ -22,6 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await insertRequest({
       id: crypto.randomUUID(),
+      type: "consultation",
       name,
       organization: typeof body.organization === "string" ? body.organization.trim() : "",
       title: typeof body.title === "string" ? body.title.trim() : "",

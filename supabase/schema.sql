@@ -3,6 +3,7 @@
 
 create table if not exists requests (
   id uuid primary key,
+  type text not null default 'consultation',
   name text not null,
   organization text,
   title text,
@@ -13,6 +14,10 @@ create table if not exists requests (
   read boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+-- Adds the `type` column to a table created before it existed. Safe to
+-- re-run: ADD COLUMN IF NOT EXISTS is a no-op once the column is there.
+alter table requests add column if not exists type text not null default 'consultation';
 
 -- RLS on with zero policies = nobody can read/write this table through the
 -- public API (anon/authenticated keys), full stop. Our /api functions use

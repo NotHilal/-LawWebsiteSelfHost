@@ -29,7 +29,7 @@ const AREAS_OF_INTEREST = [
 const presentCategoryChoices = {
   name: "present_category_choices",
   description:
-    "Actually invoke this function call (not just a sentence describing it) once you have the visitor's name, email, and a real description of what they need help with, at the exact moment you are ready to ask which category fits best. Required every single time you reach this point — do not instead just write text saying you are ready. Do not list the category options in your text reply either — the interface displays them. Just briefly say you're ready for them to pick one.",
+    "Actually invoke this function call (not just a sentence describing it) once you have the visitor's name, email, and a real description of what they need help with, at the exact moment you are ready to ask which category fits best. Required every single time you reach this point — do not instead just write text saying you are ready. Do not list the category options in your text reply either — the interface displays them. Just briefly say you're ready for them to pick one. Only used for the full consultation flow, never for a one-off question.",
   parameters: { type: "object", properties: {} },
 };
 
@@ -59,15 +59,35 @@ const submitConsultationRequest = {
   },
 };
 
+const submitQuestion = {
+  name: "submit_question",
+  description:
+    "Submits a one-off question to the Summit Management Consultancy team, who will reply by email. Use this instead of the full consultation flow when the visitor just wants to ask something specific and get a direct answer by email, rather than requesting a consultation. Only call this after the visitor has given their email and explicitly confirmed they want to send the question.",
+  parameters: {
+    type: "object",
+    properties: {
+      email: { type: "string", description: "The visitor's email address, so the team can reply." },
+      question: { type: "string", description: "The visitor's question, in their own words." },
+      name: { type: "string", description: "The visitor's name, if they gave one — optional, never ask for it specifically." },
+    },
+    required: ["email", "question"],
+  },
+};
+
+const TOOLS = [{ functionDeclarations: [presentCategoryChoices, submitConsultationRequest, submitQuestion] }];
+
 const SYSTEM_INSTRUCTION =
   "You are an assistant for Summit Management Consultancy, based in Doha, Qatar. Answer general questions about practice areas. You are not a lawyer and do not give legal advice. Never ask for confidential case details. " +
   "You cannot book, schedule, or confirm appointments yourself, and you have no calendar access — never say you will check availability or confirm a booking. " +
-  "When a visitor wants a consultation, collect these in this exact order, asking only one at a time and waiting for their reply before moving on: (1) their name, (2) their email, (3) a brief description of what they need help with. A first name alone is completely fine for the name — never ask for a last name or a full name specifically. " +
+  "There are two distinct things a visitor might want, and you should keep them separate: a full consultation request, or just a one-off question they want answered by email. " +
+  "CONSULTATION FLOW: when a visitor wants a consultation, collect these in this exact order, asking only one at a time and waiting for their reply before moving on: (1) their name, (2) their email, (3) a brief description of what they need help with. A first name alone is completely fine for the name — never ask for a last name or a full name specifically. " +
   "Apply the same scrutiny to every field, not just email: if the name is a single letter or clearly not a name at all, ask them to confirm or provide a different one. For the description, the only bar is length — if it's under about 20 characters, ask for a bit more detail; 20 characters or more is enough, don't judge it further than that. " +
   "Once you have all three, you must make an actual function call to present_category_choices in that same turn — never respond with only a text sentence saying you're ready or that you're about to ask; the function call itself is mandatory, not optional, every time you reach this point. Do not type out the category list yourself. " +
   "After the visitor picks a category (their next message will be one of the exact option strings), summarize everything you've gathered including the category and ask them to confirm they want to send it. Only call submit_consultation_request after they explicitly confirm. " +
   "Organization, title, and phone are optional — only ask if it flows naturally, before calling present_category_choices. " +
   "After submit_consultation_request succeeds, tell them the team will follow up directly — make clear this is a request for someone to reach out, not a confirmed appointment time. " +
+  "QUESTION FLOW: if instead a visitor just wants to ask a specific question and get a direct reply by email, rather than a full consultation, keep it minimal — do not run the consultation flow for this. Ask for their email if you don't already have it, confirm back the exact question you're about to send, and only call submit_question after they explicitly confirm. Never ask for their name, a category, or any other field in this flow. " +
+  "After submit_question succeeds, tell them the team will review it and reply by email — make clear there's no guaranteed reply time. " +
   "Reply in plain conversational text only: no markdown, no asterisks, no bullet points or numbered lists, no headers. Keep responses short — a few sentences at most.";
 
 type ChatTurn = { role: "user" | "assistant"; content: string };
@@ -105,7 +125,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const config = {
     systemInstruction: SYSTEM_INSTRUCTION,
-    tools: [{ functionDeclarations: [presentCategoryChoices, submitConsultationRequest] }],
+    tools: TOOLS,
     toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
   };
 
@@ -134,6 +154,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (submitted) {
         await insertRequest({
           id: crypto.randomUUID(),
+          type: "consultation",
           name: args.name!.trim(),
           organization: args.organization?.trim() ?? "",
           title: args.title?.trim() ?? "",
@@ -152,6 +173,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         submitted
           ? { success: true }
           : { success: false, error: "Missing required fields: name, email, message, or interest." },
+      );
+      return res.status(200).json({ reply: followUp });
+    }
+
+    if (call.name === "submit_question") {
+      const args = (call.args ?? {}) as Record<string, string | undefined>;
+      const submitted = !!(args.email?.trim() && args.question?.trim());
+
+      if (submitted) {
+        await insertRequest({
+          id: crypto.randomUUID(),
+          type: "question",
+          name: args.name?.trim() ?? "",
+          organization: "",
+          title: "",
+          email: args.email!.trim(),
+          phone: "",
+          interest: "",
+          message: args.question!.trim(),
+          created_at: new Date().toISOString(),
+        });
+      }
+
+      const followUp = await runFunctionResponseTurn(
+        contents,
+        response,
+        call.name,
+        submitted ? { success: true } : { success: false, error: "Missing required fields: email or question." },
       );
       return res.status(200).json({ reply: followUp });
     }
@@ -184,7 +233,7 @@ async function runFunctionResponseTurn(
     contents: followUpContents,
     config: {
       systemInstruction: SYSTEM_INSTRUCTION,
-      tools: [{ functionDeclarations: [presentCategoryChoices, submitConsultationRequest] }],
+      tools: TOOLS,
       toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
     },
   });

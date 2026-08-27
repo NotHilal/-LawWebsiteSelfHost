@@ -18,8 +18,11 @@ function db(): SupabaseClient {
   return client;
 }
 
+export type RequestType = "consultation" | "question";
+
 export type ContactRequest = {
   id: string;
+  type: RequestType;
   name: string;
   organization: string | null;
   title: string | null;
@@ -33,6 +36,7 @@ export type ContactRequest = {
 
 export async function insertRequest(data: {
   id: string;
+  type: RequestType;
   name: string;
   organization: string;
   title: string;
@@ -46,6 +50,7 @@ export async function insertRequest(data: {
     .from("requests")
     .insert({
       id: data.id,
+      type: data.type,
       name: data.name,
       organization: data.organization || null,
       title: data.title || null,

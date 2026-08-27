@@ -11,8 +11,11 @@ import {
 } from "lucide-react";
 import { media } from "../data/media";
 
+type RequestType = "consultation" | "question";
+
 type ContactRequest = {
   id: string;
+  type: RequestType;
   name: string;
   organization: string | null;
   title: string | null;
@@ -161,12 +164,18 @@ function LoginView({ onLogin }: { onLogin: (token: string) => void }) {
 
 type Filter = "all" | "unread";
 
+const TABS: { value: RequestType; label: string }[] = [
+  { value: "consultation", label: "Requests" },
+  { value: "question", label: "Questions" },
+];
+
 function RequestsView({ token, onLogout }: { token: string; onLogout: () => void }) {
   const [requests, setRequests] = useState<ContactRequest[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [tab, setTab] = useState<RequestType>("consultation");
   const [deleting, setDeleting] = useState(false);
 
   async function load() {
@@ -193,9 +202,11 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const tabRequests = useMemo(() => requests.filter((r) => r.type === tab), [requests, tab]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return requests.filter((r) => {
+    return tabRequests.filter((r) => {
       if (filter === "unread" && r.read) return false;
       if (!q) return true;
       return (
@@ -205,10 +216,15 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
         r.message.toLowerCase().includes(q)
       );
     });
-  }, [requests, query, filter]);
+  }, [tabRequests, query, filter]);
 
   const selected = requests.find((r) => r.id === selectedId) ?? null;
-  const unreadCount = requests.filter((r) => !r.read).length;
+  const unreadCount = tabRequests.filter((r) => !r.read).length;
+
+  function switchTab(next: RequestType) {
+    setTab(next);
+    setSelectedId(null);
+  }
 
   async function toggleRead(req: ContactRequest) {
     setRequests((prev) => prev.map((r) => (r.id === req.id ? { ...r, read: !r.read } : r)));
@@ -220,7 +236,7 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
   }
 
   async function handleDelete(req: ContactRequest) {
-    if (!confirm(`Delete the request from ${req.name}? This can't be undone.`)) return;
+    if (!confirm(`Delete the ${req.type === "question" ? "question" : "request"} from ${req.name || req.email}? This can't be undone.`)) return;
     setDeleting(true);
     try {
       await fetch("/api/requests", {
@@ -246,22 +262,40 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.28em] text-summit-gold">Admin</p>
           <h1 className="mt-1 font-serif text-xl text-summit-ivory">
-            Client Requests
+            {tab === "consultation" ? "Client Requests" : "Questions"}
             {status === "ready" && (
               <span className="ml-3 align-middle text-sm font-sans text-summit-mute">
-                {requests.length} total{unreadCount > 0 && ` · ${unreadCount} unread`}
+                {tabRequests.length} total{unreadCount > 0 && ` · ${unreadCount} unread`}
               </span>
             )}
           </h1>
         </div>
-        <button
-          type="button"
-          onClick={onLogout}
-          className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-summit-mute transition-colors hover:text-summit-gold"
-        >
-          <LogOut className="h-4 w-4" aria-hidden="true" />
-          Log Out
-        </button>
+        <div className="flex items-center gap-6">
+          <div className="flex gap-2">
+            {TABS.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => switchTab(t.value)}
+                className={`border px-4 py-2 text-xs uppercase tracking-[0.16em] transition-colors ${
+                  tab === t.value
+                    ? "border-summit-gold text-summit-gold"
+                    : "border-summit-graphite text-summit-mute hover:text-summit-ivory"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={onLogout}
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-summit-mute transition-colors hover:text-summit-gold"
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            Log Out
+          </button>
+        </div>
       </header>
 
       {status === "loading" && (
@@ -319,7 +353,13 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
               {filtered.length === 0 && (
                 <div className="flex flex-col items-center gap-3 px-6 py-16 text-center text-summit-mute">
                   <Inbox className="h-8 w-8 text-summit-mute-dark" aria-hidden="true" />
-                  <p className="text-sm">{requests.length === 0 ? "No requests yet." : "No matches."}</p>
+                  <p className="text-sm">
+                    {tabRequests.length === 0
+                      ? tab === "consultation"
+                        ? "No requests yet."
+                        : "No questions yet."
+                      : "No matches."}
+                  </p>
                 </div>
               )}
               {filtered.map((req) => (
@@ -335,7 +375,7 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                     <span className="flex min-w-0 items-center gap-2">
                       {!req.read && <span className="h-1.5 w-1.5 flex-none rounded-full bg-summit-gold" aria-hidden="true" />}
                       <span className={`truncate font-serif text-base ${req.read ? "text-summit-ivory/80" : "text-summit-ivory"}`}>
-                        {req.name}
+                        {req.name || req.email}
                       </span>
                     </span>
                     <span className="flex-none text-[0.65rem] text-summit-mute-dark">{relativeTime(req.created_at)}</span>
@@ -372,7 +412,7 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <h2 className="font-serif text-2xl text-summit-ivory">
-                      {selected.name}
+                      {selected.name || selected.email}
                       {selected.title && <span className="text-summit-mute">, {selected.title}</span>}
                     </h2>
                     {selected.organization && <p className="mt-1 text-sm text-summit-mute">{selected.organization}</p>}
