@@ -65,6 +65,18 @@ function hasRequestedConsultation(messages: ChatMessage[]): boolean {
   });
 }
 
+// Narrower than INTAKE_IN_PROGRESS_PHRASES: specifically the category question itself,
+// so the picker can auto-open right when it's relevant instead of waiting for a tap.
+// "of interest" (not "area of interest") deliberately avoids missing the plural "areas of interest".
+const CATEGORY_QUESTION_PHRASES = ["of interest", "practice areas", "practice area that"];
+
+function isAskingForCategory(messages: ChatMessage[]): boolean {
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== "assistant") return false;
+  const text = last.content.toLowerCase();
+  return CATEGORY_QUESTION_PHRASES.some((phrase) => text.includes(phrase));
+}
+
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
@@ -77,6 +89,12 @@ export default function ChatWidget() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isOpen]);
+
+  useEffect(() => {
+    if (isAskingForCategory(messages)) {
+      setShowPicker(true);
+    }
+  }, [messages]);
 
   async function sendMessage(text: string) {
     if (!text || loading) return;
