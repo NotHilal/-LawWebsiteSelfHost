@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { List, Send, X } from "lucide-react";
+import { Send, X } from "lucide-react";
 import { media } from "../data/media";
 import { areasOfInterest } from "../data/siteContent";
 
@@ -129,8 +129,6 @@ export default function ChatWidget() {
     await sendMessage(text);
   }
 
-  const canPickCategory = hasRequestedConsultation(messages);
-
   return (
     <div className="fixed bottom-6 right-6 z-[70] flex flex-col items-end">
       <AnimatePresence>
@@ -195,7 +193,7 @@ export default function ChatWidget() {
               {error && <p className="text-xs text-red-400">{error}</p>}
             </div>
 
-            {canPickCategory && showPicker && (
+            {showPicker && (
               <div className="flex flex-wrap gap-2 border-t border-summit-graphite px-3 pb-3 pt-3">
                 {areasOfInterest.map((option) => (
                   <button
@@ -213,25 +211,8 @@ export default function ChatWidget() {
 
             <form
               onSubmit={handleSubmit}
-              className={`flex items-center gap-2 p-3 ${
-                canPickCategory && showPicker ? "" : "border-t border-summit-graphite"
-              }`}
+              className={`flex items-center gap-2 p-3 ${showPicker ? "" : "border-t border-summit-graphite"}`}
             >
-              {canPickCategory && (
-                <button
-                  type="button"
-                  onClick={() => setShowPicker((v) => !v)}
-                  aria-label={showPicker ? "Hide area of interest options" : "Choose area of interest"}
-                  aria-pressed={showPicker}
-                  className={`rounded-full border p-2.5 transition-colors ${
-                    showPicker
-                      ? "border-summit-gold bg-summit-gold/10 text-summit-gold"
-                      : "border-summit-graphite text-summit-mute hover:border-summit-gold hover:text-summit-gold"
-                  }`}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              )}
               <input
                 type="text"
                 value={input}
