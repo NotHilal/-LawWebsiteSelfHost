@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
+  AlertTriangle,
   ArrowLeft,
   ChevronLeft,
   Inbox,
@@ -186,6 +188,7 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
   const [filter, setFilter] = useState<Filter>("all");
   const [tab, setTab] = useState<RequestType>("consultation");
   const [deleting, setDeleting] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState<ContactRequest | null>(null);
 
   async function load() {
     setStatus("loading");
@@ -244,8 +247,9 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
     });
   }
 
-  async function handleDelete(req: ContactRequest) {
-    if (!confirm(`Delete the ${req.type === "question" ? "question" : "request"} from ${req.name || req.email}? This can't be undone.`)) return;
+  async function confirmDelete() {
+    if (!confirmTarget) return;
+    const req = confirmTarget;
     setDeleting(true);
     try {
       await fetch("/api/requests", {
@@ -257,6 +261,7 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
       setSelectedId(null);
     } finally {
       setDeleting(false);
+      setConfirmTarget(null);
     }
   }
 
@@ -443,7 +448,7 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(selected)}
+                      onClick={() => setConfirmTarget(selected)}
                       disabled={deleting}
                       aria-label="Delete request"
                       className="border border-summit-graphite p-2 text-summit-mute transition-colors hover:border-red-400/60 hover:text-red-400 disabled:opacity-50"
@@ -493,6 +498,59 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {confirmTarget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 px-6"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-confirm-title"
+            onClick={() => !deleting && setConfirmTarget(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.97 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full max-w-sm border border-summit-graphite bg-summit-charcoal px-8 py-8 shadow-[0_0_60px_-15px_rgba(0,0,0,0.6)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AlertTriangle className="h-8 w-8 text-red-400" aria-hidden="true" />
+              <h2 id="delete-confirm-title" className="mt-4 font-serif text-xl text-summit-ivory">
+                Delete this {confirmTarget.type === "question" ? "question" : "request"}?
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-summit-mute">
+                From <span className="text-summit-ivory/85">{confirmTarget.name || confirmTarget.email}</span>.
+                This can&rsquo;t be undone.
+              </p>
+              <div className="mt-8 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setConfirmTarget(null)}
+                  disabled={deleting}
+                  className="border border-summit-graphite px-4 py-2.5 text-xs uppercase tracking-[0.16em] text-summit-mute transition-colors hover:text-summit-ivory disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  disabled={deleting}
+                  className="inline-flex items-center gap-2 bg-red-500/90 px-4 py-2.5 text-xs font-medium uppercase tracking-[0.16em] text-white transition-colors hover:bg-red-500 disabled:opacity-50"
+                >
+                  {deleting && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                  {deleting ? "Deleting" : "Delete"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
