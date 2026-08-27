@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Send, X } from "lucide-react";
 import { media } from "../data/media";
+import { areasOfInterest } from "../data/siteContent";
 
 type ChatMessage = {
   id: string;
@@ -16,6 +17,12 @@ const GREETING: ChatMessage = {
     "Hello — I'm the Summit assistant. Ask me about our practice areas or how to book a consultation. I'm not a lawyer and can't give legal advice.",
 };
 
+function looksLikeCategoryPrompt(text: string): boolean {
+  const lower = text.toLowerCase();
+  const matches = areasOfInterest.filter((option) => lower.includes(option.toLowerCase()));
+  return matches.length >= 4;
+}
+
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
@@ -28,9 +35,7 @@ export default function ChatWidget() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isOpen]);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    const text = input.trim();
+  async function sendMessage(text: string) {
     if (!text || loading) return;
 
     const userMessage: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text };
@@ -62,6 +67,17 @@ export default function ChatWidget() {
       setLoading(false);
     }
   }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text) return;
+    await sendMessage(text);
+  }
+
+  const lastMessage = messages[messages.length - 1];
+  const showCategoryPicker =
+    !loading && lastMessage?.role === "assistant" && looksLikeCategoryPrompt(lastMessage.content);
 
   return (
     <div className="fixed bottom-6 right-6 z-[70] flex flex-col items-end">
@@ -122,6 +138,20 @@ export default function ChatWidget() {
                   <div className="rounded-xl bg-summit-graphite px-3 py-2 text-sm text-summit-mute">
                     Typing…
                   </div>
+                </div>
+              )}
+              {showCategoryPicker && (
+                <div className="flex flex-wrap gap-2 pl-8">
+                  {areasOfInterest.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => sendMessage(option)}
+                      className="rounded-full border border-summit-gold/60 px-3 py-1.5 text-xs text-summit-ivory transition-colors hover:border-summit-gold hover:bg-summit-gold/10"
+                    >
+                      {option}
+                    </button>
+                  ))}
                 </div>
               )}
               {error && <p className="text-xs text-red-400">{error}</p>}
