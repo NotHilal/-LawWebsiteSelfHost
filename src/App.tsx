@@ -14,6 +14,7 @@ import LegalSupport from "./pages/LegalSupport";
 import Recognition from "./pages/Recognition";
 import Collaboration from "./pages/Collaboration";
 import Contact from "./pages/Contact";
+import AskQuestion from "./pages/AskQuestion";
 import Privacy from "./pages/Privacy";
 import Admin from "./pages/Admin";
 
@@ -95,6 +96,14 @@ export default function App() {
               element={
                 <PageTransition>
                   <Contact />
+                </PageTransition>
+              }
+            />
+            <Route
+              path="/ask-a-question"
+              element={
+                <PageTransition>
+                  <AskQuestion />
                 </PageTransition>
               }
             />

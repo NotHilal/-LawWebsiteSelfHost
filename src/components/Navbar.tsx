@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { nav } from "../data/siteContent";
 import { media } from "../data/media";
 import MobileMenu from "./MobileMenu";
-import { OPEN_CHAT_EVENT } from "./ChatWidget";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -74,13 +73,12 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new Event(OPEN_CHAT_EVENT))}
+            <Link
+              to="/ask-a-question"
               className="hidden whitespace-nowrap border border-summit-gold/60 px-4 py-2.5 text-[0.68rem] font-medium tracking-[0.1em] uppercase text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10 lg:inline-block"
             >
               Ask a Question
-            </button>
+            </Link>
             <Link
               to="/contact"
               className="hidden whitespace-nowrap border border-summit-gold/60 px-4 py-2.5 text-[0.68rem] font-medium tracking-[0.1em] uppercase text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10 lg:inline-block"

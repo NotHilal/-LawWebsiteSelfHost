@@ -337,6 +337,13 @@ export const consultation = {
   ctaLabel: "Request a Confidential Consultation",
 };
 
+export const askQuestion = {
+  heading: "Ask a Question",
+  copy:
+    "Have a specific question rather than a full consultation? Send it through and a member of Summit Management Consultancy will reply directly by email.",
+  ctaLabel: "Submit Your Question",
+};
+
 export const areasOfInterest = [
   "Strategic Advisory",
   "Project Management",
@@ -371,6 +378,7 @@ export const footerNav = [
   { label: "Recognition", to: "/recognition" },
   { label: "Collaboration", to: "/collaboration" },
   { label: "Contact", to: "/contact" },
+  { label: "Ask a Question", to: "/ask-a-question" },
   { label: "Privacy", to: "/privacy" },
 ];
 
@@ -411,6 +419,10 @@ export const seo = {
   contact: {
     title: "Contact | Summit Management Consultancy",
     description: "Request a confidential consultation with Summit Management Consultancy in Doha, Qatar.",
+  },
+  askQuestion: {
+    title: "Ask a Question | Summit Management Consultancy",
+    description: "Send a specific question to Summit Management Consultancy and receive a reply by email.",
   },
   privacy: {
     title: "Privacy | Summit Management Consultancy",

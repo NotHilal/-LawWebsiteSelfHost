@@ -17,10 +17,6 @@ const GREETING: ChatMessage = {
     "Hello — I'm the Summit assistant. Ask me about our practice areas or how to book a consultation. I'm not a lawyer and can't give legal advice.",
 };
 
-// Lets other components (e.g. the "Ask a Question" nav button) open the chat
-// without lifting its state — they're siblings under App, not parent/child.
-export const OPEN_CHAT_EVENT = "summit-open-chat";
-
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
@@ -34,12 +30,6 @@ export default function ChatWidget() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isOpen, showPicker]);
-
-  useEffect(() => {
-    const openChat = () => setIsOpen(true);
-    window.addEventListener(OPEN_CHAT_EVENT, openChat);
-    return () => window.removeEventListener(OPEN_CHAT_EVENT, openChat);
-  }, []);
 
   // The input is disabled while loading, so refocus once it's enabled again rather
   // than right after sending — focusing a disabled field is a no-op.

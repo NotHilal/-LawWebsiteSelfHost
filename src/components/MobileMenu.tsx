@@ -3,7 +3,6 @@ import { NavLink } from "react-router-dom";
 import { X } from "lucide-react";
 import { nav } from "../data/siteContent";
 import { media } from "../data/media";
-import { OPEN_CHAT_EVENT } from "./ChatWidget";
 
 type MobileMenuProps = {
   open: boolean;
@@ -60,16 +59,13 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
           </nav>
 
           <div className="flex flex-col gap-3 px-8 pb-10">
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                window.dispatchEvent(new Event(OPEN_CHAT_EVENT));
-              }}
+            <NavLink
+              to="/ask-a-question"
+              onClick={onClose}
               className="block border border-summit-gold/60 py-4 text-center text-xs font-medium tracking-[0.2em] uppercase text-summit-ivory"
             >
               Ask a Question
-            </button>
+            </NavLink>
             <NavLink
               to="/contact"
               onClick={onClose}

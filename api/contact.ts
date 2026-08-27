@@ -14,6 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const email = typeof body.email === "string" ? body.email.trim() : "";
   const message = typeof body.message === "string" ? body.message.trim() : "";
   const consent = body.consent === true;
+  const type = body.type === "question" ? "question" : "consultation";
 
   if (!name || !email || !message || !consent || !emailPattern.test(email)) {
     return res.status(400).json({ message: "Missing or invalid fields" });
@@ -22,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await insertRequest({
       id: crypto.randomUUID(),
-      type: "consultation",
+      type,
       name,
       organization: typeof body.organization === "string" ? body.organization.trim() : "",
       title: typeof body.title === "string" ? body.title.trim() : "",
