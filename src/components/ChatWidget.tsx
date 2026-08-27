@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Send, X } from "lucide-react";
+import { List, Send, X } from "lucide-react";
 import { media } from "../data/media";
 import { areasOfInterest } from "../data/siteContent";
 
@@ -17,18 +17,13 @@ const GREETING: ChatMessage = {
     "Hello — I'm the Summit assistant. Ask me about our practice areas or how to book a consultation. I'm not a lawyer and can't give legal advice.",
 };
 
-function looksLikeCategoryPrompt(text: string): boolean {
-  const lower = text.toLowerCase();
-  const matches = areasOfInterest.filter((option) => lower.includes(option.toLowerCase()));
-  return matches.length >= 4;
-}
-
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,6 +37,7 @@ export default function ChatWidget() {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setError(null);
+    setShowPicker(false);
     setLoading(true);
 
     try {
@@ -74,10 +70,6 @@ export default function ChatWidget() {
     if (!text) return;
     await sendMessage(text);
   }
-
-  const lastMessage = messages[messages.length - 1];
-  const showCategoryPicker =
-    !loading && lastMessage?.role === "assistant" && looksLikeCategoryPrompt(lastMessage.content);
 
   return (
     <div className="fixed bottom-6 right-6 z-[70] flex flex-col items-end">
@@ -140,24 +132,42 @@ export default function ChatWidget() {
                   </div>
                 </div>
               )}
-              {showCategoryPicker && (
-                <div className="flex flex-wrap gap-2 pl-8">
-                  {areasOfInterest.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => sendMessage(option)}
-                      className="rounded-full border border-summit-gold/60 px-3 py-1.5 text-xs text-summit-ivory transition-colors hover:border-summit-gold hover:bg-summit-gold/10"
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              )}
               {error && <p className="text-xs text-red-400">{error}</p>}
             </div>
 
-            <form onSubmit={handleSubmit} className="flex items-center gap-2 border-t border-summit-graphite p-3">
+            {showPicker && (
+              <div className="flex flex-wrap gap-2 border-t border-summit-graphite px-3 pb-3 pt-3">
+                {areasOfInterest.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => sendMessage(option)}
+                    disabled={loading}
+                    className="rounded-full border border-summit-gold/60 px-3 py-1.5 text-xs text-summit-ivory transition-colors hover:border-summit-gold hover:bg-summit-gold/10 disabled:opacity-40"
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <form
+              onSubmit={handleSubmit}
+              className={`flex items-center gap-2 p-3 ${showPicker ? "" : "border-t border-summit-graphite"}`}
+            >
+              <button
+                type="button"
+                onClick={() => setShowPicker((v) => !v)}
+                aria-label={showPicker ? "Hide area of interest options" : "Choose area of interest"}
+                aria-pressed={showPicker}
+                className={`rounded-full border p-2.5 transition-colors ${
+                  showPicker
+                    ? "border-summit-gold bg-summit-gold/10 text-summit-gold"
+                    : "border-summit-graphite text-summit-mute hover:border-summit-gold hover:text-summit-gold"
+                }`}
+              >
+                <List className="h-4 w-4" />
+              </button>
               <input
                 type="text"
                 value={input}
