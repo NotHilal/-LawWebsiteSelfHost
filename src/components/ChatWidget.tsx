@@ -33,14 +33,36 @@ const CONSULTATION_INTENT_KEYWORDS = [
   "reach out",
   "contact your team",
   "contact the team",
+  "help",
+  "assist",
+  "project",
+];
+
+// Once the assistant is actually collecting intake details, its own wording is a far
+// more reliable signal than guessing intent from however the visitor first phrased it.
+const INTAKE_IN_PROGRESS_PHRASES = [
+  "full name",
+  "your name",
+  "email address",
+  "what you need help with",
+  "what you're looking for help with",
+  "brief description",
+  "briefly describe",
+  "which of our practice areas",
+  "area of interest",
+  "consultation request",
+  "send this to our team",
+  "send this consultation request",
 ];
 
 function hasRequestedConsultation(messages: ChatMessage[]): boolean {
-  return messages.some(
-    (m) =>
-      m.role === "user" &&
-      CONSULTATION_INTENT_KEYWORDS.some((keyword) => m.content.toLowerCase().includes(keyword)),
-  );
+  return messages.some((m) => {
+    const text = m.content.toLowerCase();
+    if (m.role === "user") {
+      return CONSULTATION_INTENT_KEYWORDS.some((keyword) => text.includes(keyword));
+    }
+    return INTAKE_IN_PROGRESS_PHRASES.some((phrase) => text.includes(phrase));
+  });
 }
 
 export default function ChatWidget() {
