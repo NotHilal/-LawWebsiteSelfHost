@@ -102,7 +102,7 @@ export default function ChatWidget() {
                     <img src={media.aiIcon} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover" />
                   )}
                   <div
-                    className={`max-w-[80%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
+                    className={`max-w-[80%] whitespace-pre-wrap rounded-xl px-3 py-2 text-sm leading-relaxed ${
                       m.role === "user"
                         ? "bg-summit-gold text-summit-black"
                         : "bg-summit-graphite text-summit-ivory"
