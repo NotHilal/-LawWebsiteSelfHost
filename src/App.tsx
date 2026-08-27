@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import PageTransition from "./components/PageTransition";
 import ScrollToTop from "./components/ScrollToTop";
 import StructuredData from "./components/StructuredData";
+import ChatWidget from "./components/ChatWidget";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Expertise from "./pages/Expertise";
@@ -110,6 +111,7 @@ export default function App() {
         </AnimatePresence>
       </main>
       <Footer />
+      {location.pathname !== "/admin" && <ChatWidget />}
     </div>
   );
 }
