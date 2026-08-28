@@ -44,7 +44,13 @@ export default function BusinessCard() {
     <div className="flex flex-col items-center">
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          rotateX.set(0);
+          rotateY.set(0);
+          springX.jump(0);
+          springY.jump(0);
+          setOpen(true);
+        }}
         className="group relative inline-flex items-center gap-3 border border-summit-gold/60 px-8 py-4 text-xs font-medium uppercase tracking-[0.18em] text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10"
       >
         <CreditCard className="h-4 w-4 text-summit-gold" aria-hidden="true" />
