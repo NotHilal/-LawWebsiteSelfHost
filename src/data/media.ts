@@ -8,7 +8,7 @@ import portrait from "../assets/portrait.webp";
 import heroPortrait from "../assets/hero-portrait.jpg";
 import awardLexisNexis from "../assets/award-lexisnexis.webp";
 import awardQatarBLF from "../assets/award-qatar-blf.webp";
-import aiIcon from "../../img/ai.jpg";
+import aiIcon from "../assets/chatbot-avatar.webp";
 import type { RecognitionItem } from "./siteContent";
 
 export const media = {
