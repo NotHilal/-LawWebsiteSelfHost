@@ -39,9 +39,11 @@ export default function Navbar() {
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-4 sm:px-10 lg:px-14">
           <Link to="/" className="flex items-center gap-3" aria-label="Summit Management Consultancy — Home">
             <img src={media.emblem} alt="" role="presentation" className="h-9 w-auto" />
-            <span className="hidden sm:flex sm:flex-col sm:leading-tight">
-              <span className="font-serif text-lg tracking-[0.12em] text-summit-ivory">SUMMIT</span>
-              <span className="hidden font-sans text-[0.58rem] tracking-[0.24em] text-summit-mute lg:block">
+            <span className="flex flex-col leading-tight">
+              <span className="font-serif text-base tracking-[0.1em] text-summit-ivory sm:text-lg sm:tracking-[0.12em]">
+                SUMMIT
+              </span>
+              <span className="font-sans text-[0.48rem] tracking-[0.16em] text-summit-mute sm:text-[0.58rem] sm:tracking-[0.24em]">
                 MANAGEMENT CONSULTANCY
               </span>
             </span>
