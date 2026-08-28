@@ -38,7 +38,9 @@ export default function Footer() {
             <ul className="mt-5 space-y-3 text-sm text-summit-ivory/80">
               <li>{contact.city}</li>
               {contact.email && <li>{contact.email}</li>}
-              {contact.phone && <li>{contact.phone}</li>}
+              {contact.phones.map((phone) => (
+                <li key={phone}>{phone}</li>
+              ))}
             </ul>
             <p className="mt-6 text-xs uppercase tracking-[0.2em] text-summit-mute">
               Professional collaboration

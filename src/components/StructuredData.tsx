@@ -19,7 +19,7 @@ export default function StructuredData() {
       sameAs: [collaboration.url],
     };
     if (contact.email) data.email = contact.email;
-    if (contact.phone) data.telephone = contact.phone;
+    if (contact.phones.length > 0) data.telephone = contact.phones[0];
     if (contact.address) (data.address as Record<string, unknown>).streetAddress = contact.address;
 
     let script = document.getElementById("structured-data") as HTMLScriptElement | null;

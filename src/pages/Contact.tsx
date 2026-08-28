@@ -4,6 +4,7 @@ import PageHeader from "../components/PageHeader";
 import ContactForm from "../components/ContactForm";
 import RevealOnScroll from "../components/RevealOnScroll";
 import GoldDivider from "../components/GoldDivider";
+import BusinessCard from "../components/BusinessCard";
 import { seo, consultation, contact } from "../data/siteContent";
 
 export default function Contact() {
@@ -31,14 +32,14 @@ export default function Contact() {
                     </a>
                   </li>
                 )}
-                {contact.phone && (
-                  <li className="flex items-start gap-3 text-summit-ivory/85">
+                {contact.phones.map((phone) => (
+                  <li key={phone} className="flex items-start gap-3 text-summit-ivory/85">
                     <Phone className="mt-0.5 h-4 w-4 flex-none text-summit-gold" aria-hidden="true" />
-                    <a href={`tel:${contact.phone}`} className="hover:text-summit-gold">
-                      {contact.phone}
+                    <a href={`tel:${phone.replace(/\s+/g, "")}`} className="hover:text-summit-gold">
+                      {phone}
                     </a>
                   </li>
-                )}
+                ))}
                 {contact.hours && (
                   <li className="flex items-start gap-3 text-summit-ivory/85">
                     <Clock className="mt-0.5 h-4 w-4 flex-none text-summit-gold" aria-hidden="true" />
@@ -51,6 +52,10 @@ export default function Contact() {
                 All enquiries are treated in confidence. A member of Summit Management Consultancy
                 will respond directly.
               </p>
+
+              <div className="mt-10">
+                <BusinessCard />
+              </div>
             </RevealOnScroll>
 
             <RevealOnScroll delay={0.1}>

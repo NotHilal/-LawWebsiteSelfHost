@@ -32,14 +32,14 @@ export default function AskQuestion() {
                     </a>
                   </li>
                 )}
-                {contact.phone && (
-                  <li className="flex items-start gap-3 text-summit-ivory/85">
+                {contact.phones.map((phone) => (
+                  <li key={phone} className="flex items-start gap-3 text-summit-ivory/85">
                     <Phone className="mt-0.5 h-4 w-4 flex-none text-summit-gold" aria-hidden="true" />
-                    <a href={`tel:${contact.phone}`} className="hover:text-summit-gold">
-                      {contact.phone}
+                    <a href={`tel:${phone.replace(/\s+/g, "")}`} className="hover:text-summit-gold">
+                      {phone}
                     </a>
                   </li>
-                )}
+                ))}
                 {contact.hours && (
                   <li className="flex items-start gap-3 text-summit-ivory/85">
                     <Clock className="mt-0.5 h-4 w-4 flex-none text-summit-gold" aria-hidden="true" />

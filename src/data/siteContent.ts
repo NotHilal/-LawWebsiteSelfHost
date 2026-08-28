@@ -364,8 +364,8 @@ export const areasOfInterest = [
 export const contact = {
   city: "Doha, Qatar",
   address: undefined as string | undefined,
-  phone: undefined as string | undefined,
-  email: undefined as string | undefined,
+  phones: ["+974 5595 1904", "+974 6667 8241"] as string[],
+  email: "soukayna.awdeh@summit-smc.com" as string | undefined,
   hours: undefined as string | undefined,
   mapUrl: undefined as string | undefined,
 };

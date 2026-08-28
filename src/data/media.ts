@@ -9,6 +9,8 @@ import heroPortrait from "../assets/hero-portrait.jpg";
 import awardLexisNexis from "../assets/award-lexisnexis.webp";
 import awardQatarBLF from "../assets/award-qatar-blf.webp";
 import aiIcon from "../assets/chatbot-avatar.webp";
+import businessCardFront from "../assets/business-card-front.png";
+import businessCardBack from "../assets/business-card-back.png";
 import type { RecognitionItem } from "./siteContent";
 
 export const media = {
@@ -18,6 +20,8 @@ export const media = {
   awardLexisNexis,
   awardQatarBLF,
   aiIcon,
+  businessCardFront,
+  businessCardBack,
 };
 
 export const recognitionItems: RecognitionItem[] = [
