@@ -9,7 +9,11 @@
 //   NOTIFICATION_FROM   – verified Resend sender; falls back to Resend's shared
 //                         onboarding address, which works with no domain setup
 
-const DEFAULT_TO = "hilalelayoubi1@gmail.com";
+// While sending from Resend's shared onboarding@resend.dev address (i.e. before a
+// domain is verified), this MUST be the email the Resend account is registered
+// with — Resend rejects anything else with a 403. Override with NOTIFICATION_EMAIL
+// once a domain is verified.
+const DEFAULT_TO = "hilal.elayoubi@gmail.com";
 const DEFAULT_FROM = "Summit Website <onboarding@resend.dev>";
 
 type RequestNotification = {
