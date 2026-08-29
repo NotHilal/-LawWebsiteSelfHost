@@ -5,7 +5,7 @@ import RevealOnScroll from "./RevealOnScroll";
 
 export default function Industries() {
   return (
-    <section className="bg-summit-charcoal py-24 sm:py-32">
+    <section className="bg-summit-black py-24 sm:py-32">
       <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-14">
         <RevealOnScroll className="max-w-2xl">
           <SectionLabel>Industries &amp; Environments</SectionLabel>

@@ -253,6 +253,19 @@ export const executiveProfile = {
   ],
 };
 
+/**
+ * Presentation video — a short introduction to the practice on the Home page.
+ * File lives in /public so Vite serves it statically rather than bundling it.
+ */
+export const presentationVideo = {
+  eyebrow: "A Word From Us",
+  headline: "Advisory shaped by responsibility, not volume.",
+  copy: "A short introduction to how Summit approaches high-stakes decisions, institutional governance, and the executives it serves.",
+  src: "/video/videoPres.mp4",
+  poster: "/img/carte0.png",
+  caption: "Summit Management Consultancy",
+};
+
 export type RecognitionItem = {
   id: string;
   organization: string;

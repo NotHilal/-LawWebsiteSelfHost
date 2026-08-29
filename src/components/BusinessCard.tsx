@@ -69,46 +69,48 @@ export default function BusinessCard() {
             aria-modal="true"
             aria-label="Digital business card"
           >
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="absolute right-6 top-6 p-2 text-summit-ivory transition-colors hover:text-summit-gold"
-              aria-label="Close card"
-            >
-              <X className="h-6 w-6" />
-            </button>
-
-            <div
-              className="w-full max-w-md select-none touch-none"
-              style={{ perspective: 1600 }}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={settle}
-              onPointerCancel={settle}
-            >
-              <motion.div
-                className="relative aspect-[16/9] w-full cursor-grab active:cursor-grabbing"
-                style={{
-                  transformStyle: "preserve-3d",
-                  rotateX: springX,
-                  rotateY: springY,
-                }}
+            <div className="relative w-full max-w-md">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="absolute -top-9 right-0 p-2 text-summit-ivory transition-colors hover:text-summit-gold"
+                aria-label="Close card"
               >
-                <img
-                  src={media.businessCardFront}
-                  alt="Summit Management Consultancy business card — front"
-                  draggable={false}
-                  className="absolute inset-0 h-full w-full rounded-xl object-cover shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)]"
-                  style={{ backfaceVisibility: "hidden" }}
-                />
-                <img
-                  src={media.businessCardBack}
-                  alt="Summit Management Consultancy business card — back, with contact details for Soukeina Awdeh, Managing Director"
-                  draggable={false}
-                  className="absolute inset-0 h-full w-full rounded-xl object-cover shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)]"
-                  style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
-                />
-              </motion.div>
+                <X className="h-6 w-6" />
+              </button>
+
+              <div
+                className="select-none touch-none"
+                style={{ perspective: 1600 }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={settle}
+                onPointerCancel={settle}
+              >
+                <motion.div
+                  className="relative aspect-[16/9] w-full cursor-grab active:cursor-grabbing"
+                  style={{
+                    transformStyle: "preserve-3d",
+                    rotateX: springX,
+                    rotateY: springY,
+                  }}
+                >
+                  <img
+                    src={media.businessCardFront}
+                    alt="Summit Management Consultancy business card — front"
+                    draggable={false}
+                    className="absolute inset-0 h-full w-full rounded-xl object-cover shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)]"
+                    style={{ backfaceVisibility: "hidden" }}
+                  />
+                  <img
+                    src={media.businessCardBack}
+                    alt="Summit Management Consultancy business card — back, with contact details for Soukeina Awdeh, Managing Director"
+                    draggable={false}
+                    className="absolute inset-0 h-full w-full rounded-xl object-cover shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)]"
+                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                  />
+                </motion.div>
+              </div>
             </div>
 
             <div className="flex flex-col items-center gap-4">

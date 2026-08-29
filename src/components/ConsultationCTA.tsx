@@ -5,7 +5,7 @@ import Cta from "./Cta";
 
 export default function ConsultationCTA() {
   return (
-    <section className="bg-summit-charcoal py-24 sm:py-28">
+    <section className="bg-summit-black py-24 sm:py-28">
       <div className="mx-auto max-w-3xl px-6 text-center sm:px-10">
         <RevealOnScroll>
           <GoldDivider align="center" width={48} className="mb-8" />
