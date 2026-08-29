@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { sendRequestNotification } from "./email.js";
 
 // Uses the service_role key, so it always talks to Postgres directly and
 // bypasses Row Level Security — safe here because this file only ever runs
@@ -61,6 +62,21 @@ export async function insertRequest(data: {
       created_at: data.created_at,
     });
   if (error) throw error;
+
+  // Notify by email. Awaited so it runs before the function returns (Vercel may
+  // freeze the instance otherwise), but never throws — a mail failure must not
+  // fail the submission, which is already safely persisted above.
+  await sendRequestNotification({
+    type: data.type,
+    name: data.name,
+    organization: data.organization,
+    title: data.title,
+    email: data.email,
+    phone: data.phone,
+    interest: data.interest,
+    message: data.message,
+    created_at: data.created_at,
+  });
 }
 
 export async function listRequests(): Promise<ContactRequest[]> {
