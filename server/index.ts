@@ -19,7 +19,13 @@ const indexHtml = path.join(clientDir, "index.html");
 
 const app = express();
 app.disable("x-powered-by");
-app.set("trust proxy", 1); // behind nginx / Cloudflare
+app.set("trust proxy", 1); // behind nginx / Cloudflare / Passenger
+
+// Let the web server (Apache/cPanel AutoSSL, certbot, …) own ACME HTTP-01
+// validation. Without this, the SPA fallback below answers the challenge URL
+// with index.html and certificate issuance fails.
+app.use("/.well-known", (_req, res) => res.status(404).end());
+
 app.use(express.json({ limit: "100kb" }));
 
 // --- API ---------------------------------------------------------------------
