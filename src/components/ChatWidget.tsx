@@ -35,6 +35,14 @@ type ChatMessage = {
   content: string;
 };
 
+// crypto.randomUUID() only exists in secure contexts (HTTPS / localhost).
+// Fall back to a plain random id so the widget still works over plain HTTP.
+function uid(): string {
+  const c = globalThis.crypto;
+  if (c && typeof c.randomUUID === "function") return c.randomUUID();
+  return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 const GREETING: ChatMessage = {
   id: "greeting",
   role: "assistant",
@@ -67,7 +75,7 @@ export default function ChatWidget() {
   async function sendMessage(text: string) {
     if (!text || loading) return;
 
-    const userMessage: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text };
+    const userMessage: ChatMessage = { id: uid(), role: "user", content: text };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setError(null);
@@ -89,7 +97,7 @@ export default function ChatWidget() {
 
       setMessages((prev) => [
         ...prev,
-        { id: crypto.randomUUID(), role: "assistant", content: data.reply as string },
+        { id: uid(), role: "assistant", content: data.reply as string },
       ]);
       // The server explicitly signals when to show the picker — via the model's own
       // function call — rather than the client guessing from the reply's wording.
