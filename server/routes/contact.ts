@@ -1,14 +1,12 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { Router } from "express";
 import crypto from "node:crypto";
-import { insertRequest } from "./_lib/db.js";
+import { insertRequest } from "../lib/db.js";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method Not Allowed" });
-  }
+const router = Router();
 
+router.post("/", async (req, res) => {
   const body = req.body ?? {};
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const email = typeof body.email === "string" ? body.email.trim() : "";
@@ -38,4 +36,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error("[api/contact] insert failed", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
-}
+});
+
+export default router;

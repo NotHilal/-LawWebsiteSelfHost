@@ -3,7 +3,7 @@ import { sendRequestNotification } from "./email.js";
 
 // Uses the service_role key, so it always talks to Postgres directly and
 // bypasses Row Level Security — safe here because this file only ever runs
-// server-side inside /api functions, never in the browser bundle. Never
+// server-side inside the Express API, never in the browser bundle. Never
 // import this from anything under src/.
 let client: SupabaseClient | null = null;
 
@@ -63,9 +63,9 @@ export async function insertRequest(data: {
     });
   if (error) throw error;
 
-  // Notify by email. Awaited so it runs before the function returns (Vercel may
-  // freeze the instance otherwise), but never throws — a mail failure must not
-  // fail the submission, which is already safely persisted above.
+  // Notify by email. Awaited so failures are logged in order, but
+  // sendRequestNotification never throws — a mail failure must not fail the
+  // submission, which is already safely persisted above.
   await sendRequestNotification({
     type: data.type,
     name: data.name,

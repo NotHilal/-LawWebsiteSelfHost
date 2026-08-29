@@ -1,7 +1,12 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { Router } from "express";
 import crypto from "node:crypto";
-import { GoogleGenAI, FunctionCallingConfigMode, type Content } from "@google/genai";
-import { insertRequest } from "./_lib/db.js";
+import {
+  GoogleGenAI,
+  FunctionCallingConfigMode,
+  Type,
+  type Content,
+} from "@google/genai";
+import { insertRequest } from "../lib/db.js";
 
 let client: GoogleGenAI | null = null;
 
@@ -30,7 +35,7 @@ const presentCategoryChoices = {
   name: "present_category_choices",
   description:
     "Actually invoke this function call (not just a sentence describing it) once you have the visitor's name, email, and a real description of what they need help with, at the exact moment you are ready to ask which category fits best. Required every single time you reach this point — do not instead just write text saying you are ready. Do not list the category options in your text reply either — the interface displays them. Just briefly say you're ready for them to pick one. Only used for the full consultation flow, never for a one-off question.",
-  parameters: { type: "object", properties: {} },
+  parameters: { type: Type.OBJECT, properties: {} },
 };
 
 const submitConsultationRequest = {
@@ -38,19 +43,19 @@ const submitConsultationRequest = {
   description:
     "Submits a consultation request to the Summit Management Consultancy team once the visitor has provided their name, email, a description, and a category, and has explicitly confirmed they want to send it.",
   parameters: {
-    type: "object",
+    type: Type.OBJECT,
     properties: {
-      name: { type: "string", description: "The visitor's name — a first name alone is fine." },
-      email: { type: "string", description: "The visitor's email address." },
+      name: { type: Type.STRING, description: "The visitor's name — a first name alone is fine." },
+      email: { type: Type.STRING, description: "The visitor's email address." },
       message: {
-        type: "string",
+        type: Type.STRING,
         description: "A brief summary of what the visitor needs help with.",
       },
-      organization: { type: "string", description: "The visitor's organization, if given." },
-      title: { type: "string", description: "The visitor's job title, if given." },
-      phone: { type: "string", description: "The visitor's phone number, if given." },
+      organization: { type: Type.STRING, description: "The visitor's organization, if given." },
+      title: { type: Type.STRING, description: "The visitor's job title, if given." },
+      phone: { type: Type.STRING, description: "The visitor's phone number, if given." },
       interest: {
-        type: "string",
+        type: Type.STRING,
         enum: AREAS_OF_INTEREST,
         description: "The area of interest the visitor selected from the fixed category list.",
       },
@@ -64,17 +69,22 @@ const submitQuestion = {
   description:
     "Submits a one-off question to the Summit Management Consultancy team, who will reply by email. Use this instead of the full consultation flow when the visitor just wants to ask something specific and get a direct answer by email, rather than requesting a consultation. Only call this after the visitor has given their email and explicitly confirmed they want to send the question.",
   parameters: {
-    type: "object",
+    type: Type.OBJECT,
     properties: {
-      email: { type: "string", description: "The visitor's email address, so the team can reply." },
-      question: { type: "string", description: "The visitor's question, in their own words." },
-      name: { type: "string", description: "The visitor's name, if they gave one — optional, never ask for it specifically." },
+      email: { type: Type.STRING, description: "The visitor's email address, so the team can reply." },
+      question: { type: Type.STRING, description: "The visitor's question, in their own words." },
+      name: {
+        type: Type.STRING,
+        description: "The visitor's name, if they gave one — optional, never ask for it specifically.",
+      },
     },
     required: ["email", "question"],
   },
 };
 
-const TOOLS = [{ functionDeclarations: [presentCategoryChoices, submitConsultationRequest, submitQuestion] }];
+const TOOLS = [
+  { functionDeclarations: [presentCategoryChoices, submitConsultationRequest, submitQuestion] },
+];
 
 const SYSTEM_INSTRUCTION =
   "You are an assistant for Summit Management Consultancy, based in Doha, Qatar. Answer general questions about practice areas. You are not a lawyer and do not give legal advice. Never ask for confidential case details. " +
@@ -100,11 +110,15 @@ function toContents(history: ChatTurn[]): Content[] {
   }));
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method Not Allowed" });
-  }
+const genConfig = {
+  systemInstruction: SYSTEM_INSTRUCTION,
+  tools: TOOLS,
+  toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
+};
 
+const router = Router();
+
+router.post("/", async (req, res) => {
   const body = req.body ?? {};
   const rawMessages = Array.isArray(body.messages) ? body.messages : null;
   const history: ChatTurn[] = rawMessages
@@ -124,18 +138,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ message: "Missing messages" });
   }
 
-  const config = {
-    systemInstruction: SYSTEM_INSTRUCTION,
-    tools: TOOLS,
-    toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
-  };
-
   try {
     const contents = toContents(history);
     const response = await ai().models.generateContent({
       model: "gemini-flash-lite-latest",
       contents,
-      config,
+      config: genConfig,
     });
 
     const call = response.functionCalls?.[0];
@@ -144,13 +152,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (call.name === "present_category_choices") {
-      const followUp = await runFunctionResponseTurn(contents, response, call.name, { acknowledged: true });
+      const followUp = await runFunctionResponseTurn(contents, response, call.name, {
+        acknowledged: true,
+      });
       return res.status(200).json({ reply: followUp, showCategoryPicker: true });
     }
 
     if (call.name === "submit_consultation_request") {
       const args = (call.args ?? {}) as Record<string, string | undefined>;
-      const submitted = !!(args.name?.trim() && args.email?.trim() && args.message?.trim() && args.interest?.trim());
+      const submitted = !!(
+        args.name?.trim() &&
+        args.email?.trim() &&
+        args.message?.trim() &&
+        args.interest?.trim()
+      );
 
       if (submitted) {
         await insertRequest({
@@ -211,7 +226,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error("[api/chat] generate failed", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
-}
+});
 
 async function runFunctionResponseTurn(
   contents: Content[],
@@ -232,11 +247,9 @@ async function runFunctionResponseTurn(
   const followUp = await ai().models.generateContent({
     model: "gemini-flash-lite-latest",
     contents: followUpContents,
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
-      tools: TOOLS,
-      toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
-    },
+    config: genConfig,
   });
   return followUp.text ?? "";
 }
+
+export default router;

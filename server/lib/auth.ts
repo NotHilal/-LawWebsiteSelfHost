@@ -1,5 +1,4 @@
 import crypto from "node:crypto";
-import type { VercelRequest } from "@vercel/node";
 
 const SESSION_MS = 24 * 60 * 60 * 1000;
 
@@ -16,12 +15,12 @@ export function createToken(email: string): string {
   return `${payloadStr}.${signature}`;
 }
 
-export function isAuthorized(req: VercelRequest): boolean {
+/** Verifies a raw `Authorization` header value (e.g. "Bearer <token>"). */
+export function isAuthorized(authHeader: string | undefined): boolean {
   try {
-    const header = req.headers.authorization;
-    if (!header || !header.startsWith("Bearer ")) return false;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) return false;
 
-    const token = header.slice("Bearer ".length);
+    const token = authHeader.slice("Bearer ".length);
     const [payloadStr, signature] = token.split(".");
     if (!payloadStr || !signature) return false;
 

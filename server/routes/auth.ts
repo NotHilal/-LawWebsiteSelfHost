@@ -1,11 +1,9 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createToken } from "../_lib/auth.js";
+import { Router } from "express";
+import { createToken } from "../lib/auth.js";
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method Not Allowed" });
-  }
+const router = Router();
 
+router.post("/login", (req, res) => {
   try {
     const { email, password } = req.body ?? {};
     const adminEmail = process.env.ADMIN_EMAIL;
@@ -25,4 +23,6 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     console.error("[api/auth/login] failed", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
-}
+});
+
+export default router;
