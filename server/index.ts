@@ -21,6 +21,17 @@ const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", 1); // behind nginx / Cloudflare / Passenger
 
+// Force HTTPS. Only redirects when the proxy explicitly reports an http request,
+// so it stays inert in local dev (no such header) and can't cause a loop.
+if (process.env.FORCE_HTTPS === "1") {
+  app.use((req, res, next) => {
+    if (req.headers["x-forwarded-proto"] === "http") {
+      return res.redirect(301, `https://${req.headers.host}${req.originalUrl}`);
+    }
+    next();
+  });
+}
+
 // Let the web server (Apache/cPanel AutoSSL, certbot, …) own ACME HTTP-01
 // validation. Without this, the SPA fallback below answers the challenge URL
 // with index.html and certificate issuance fails.
