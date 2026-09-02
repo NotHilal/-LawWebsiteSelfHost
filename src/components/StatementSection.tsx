@@ -1,9 +1,10 @@
-import { statement } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 import { media } from "../data/media";
 import RevealOnScroll from "./RevealOnScroll";
 import GoldDivider from "./GoldDivider";
 
 export default function StatementSection() {
+  const { statement } = useContent();
   return (
     <section className="relative overflow-hidden bg-summit-black py-28 sm:py-36">
       <img

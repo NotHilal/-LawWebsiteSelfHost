@@ -3,16 +3,17 @@ import PageHeader from "../components/PageHeader";
 import ExpertiseSection from "../components/ExpertiseSection";
 import WhoWeAdvise from "../components/WhoWeAdvise";
 import ConsultationCTA from "../components/ConsultationCTA";
-import { seo } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 
 export default function Expertise() {
+  const { pages } = useContent();
   return (
     <>
-      <Seo title={seo.expertise.title} description={seo.expertise.description} />
+      <Seo page="expertise" />
       <PageHeader
-        eyebrow="Advisory Expertise"
-        title="Strategy, execution and governance under one framework."
-        copy="Four integrated capabilities spanning project lifecycle management, executive advisory, legal practice support, and institutional governance."
+        eyebrow={pages.expertise.eyebrow}
+        title={pages.expertise.title}
+        copy={pages.expertise.copy}
       />
       <ExpertiseSection />
       <WhoWeAdvise />

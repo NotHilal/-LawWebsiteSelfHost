@@ -5,19 +5,23 @@ import ContactForm from "../components/ContactForm";
 import RevealOnScroll from "../components/RevealOnScroll";
 import GoldDivider from "../components/GoldDivider";
 import BusinessCard from "../components/BusinessCard";
-import { seo, consultation, contact } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 
 export default function Contact() {
+  const { pages, consultation, contact, ui } = useContent();
+
   return (
     <>
-      <Seo title={seo.contact.title} description={seo.contact.description} />
-      <PageHeader eyebrow="Contact" title={consultation.heading} copy={consultation.copy} />
+      <Seo page="contact" />
+      <PageHeader eyebrow={pages.contact.eyebrow} title={consultation.heading} copy={consultation.copy} />
 
       <section className="bg-summit-black pb-24 sm:pb-32">
         <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-14">
           <div className="grid grid-cols-1 gap-16 lg:grid-cols-[0.8fr_1.2fr]">
             <RevealOnScroll>
-              <p className="text-xs font-medium uppercase tracking-[0.24em] text-summit-mute">Get in touch</p>
+              <p className="text-xs font-medium uppercase tracking-[0.24em] text-summit-mute">
+                {ui.sectionLabels.getInTouch}
+              </p>
               <GoldDivider className="my-6" />
               <ul className="space-y-5">
                 <li className="flex items-start gap-3 text-summit-ivory/85">
@@ -35,7 +39,7 @@ export default function Contact() {
                 {contact.phones.map((phone) => (
                   <li key={phone} className="flex items-start gap-3 text-summit-ivory/85">
                     <Phone className="mt-0.5 h-4 w-4 flex-none text-summit-gold" aria-hidden="true" />
-                    <a href={`tel:${phone.replace(/\s+/g, "")}`} className="hover:text-summit-gold">
+                    <a href={`tel:${phone.replace(/\s+/g, "")}`} dir="ltr" className="hover:text-summit-gold">
                       {phone}
                     </a>
                   </li>
@@ -49,8 +53,7 @@ export default function Contact() {
               </ul>
 
               <p className="mt-10 max-w-sm text-sm leading-relaxed text-summit-mute">
-                All enquiries are treated in confidence. A member of Summit Management Consultancy
-                will respond directly.
+                {ui.contactPage.confidentialityNote}
               </p>
 
               <div className="mt-10">

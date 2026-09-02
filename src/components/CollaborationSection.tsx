@@ -1,11 +1,12 @@
 import { ExternalLink } from "lucide-react";
-import { collaboration } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 import SectionLabel from "./SectionLabel";
 import GoldDivider from "./GoldDivider";
 import RevealOnScroll from "./RevealOnScroll";
 import Cta from "./Cta";
 
 export default function CollaborationSection() {
+  const { collaboration } = useContent();
   return (
     <section id="collaboration" className="bg-summit-charcoal py-24 sm:py-32">
       <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-14">

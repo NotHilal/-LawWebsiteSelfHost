@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
-
-const nodes = ["Legal", "Technical", "Commercial", "Operational"];
+import { useContent, useLang } from "../i18n/useContent";
 
 const easing = [0.16, 1, 0.3, 1] as const;
 
 export default function LegalBridge() {
+  const { ui } = useContent();
+  const { dirSign } = useLang();
+  const nodes = ui.legalBridge.nodes;
   return (
     <div className="relative mx-auto flex max-w-xl flex-col items-center py-4">
       <svg
@@ -59,7 +61,7 @@ export default function LegalBridge() {
           {nodes[0]}
         </motion.span>
         <motion.span
-          initial={{ opacity: 0, x: -10 }}
+          initial={{ opacity: 0, x: -10 * dirSign }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.15, ease: easing }}
@@ -79,7 +81,7 @@ export default function LegalBridge() {
         </motion.span>
 
         <motion.span
-          initial={{ opacity: 0, x: 10 }}
+          initial={{ opacity: 0, x: 10 * dirSign }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.25, ease: easing }}

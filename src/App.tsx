@@ -6,6 +6,7 @@ import PageTransition from "./components/PageTransition";
 import ScrollToTop from "./components/ScrollToTop";
 import StructuredData from "./components/StructuredData";
 import ChatWidget from "./components/ChatWidget";
+import { useContent } from "./i18n/useContent";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Expertise from "./pages/Expertise";
@@ -21,14 +22,15 @@ import Admin from "./pages/Admin";
 export default function App() {
   const location = useLocation();
   const isAdmin = location.pathname === "/admin";
+  const { ui } = useContent();
 
   return (
     <div className="flex min-h-screen flex-col">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-summit-gold focus:px-4 focus:py-2 focus:text-summit-black"
+        className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:bg-summit-gold focus:px-4 focus:py-2 focus:text-summit-black"
       >
-        Skip to content
+        {ui.common.skipToContent}
       </a>
       <StructuredData />
       <ScrollToTop />

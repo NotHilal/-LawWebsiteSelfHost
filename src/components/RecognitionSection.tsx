@@ -1,11 +1,13 @@
-import { recognition } from "../data/siteContent";
-import { recognitionItems } from "../data/media";
+import { useContent } from "../i18n/useContent";
+import { recognitionImages } from "../data/media";
 import SectionLabel from "./SectionLabel";
 import GoldDivider from "./GoldDivider";
 import RevealOnScroll from "./RevealOnScroll";
 import RecognitionCard from "./RecognitionCard";
 
 export default function RecognitionSection() {
+  const { recognition } = useContent();
+
   return (
     <section id="recognition" className="bg-summit-black py-24 sm:py-32">
       <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-14">
@@ -18,9 +20,9 @@ export default function RecognitionSection() {
         </RevealOnScroll>
 
         <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2">
-          {recognitionItems.map((item, i) => (
+          {recognition.items.map((item, i) => (
             <RevealOnScroll key={item.id} delay={i * 0.1}>
-              <RecognitionCard item={item} />
+              <RecognitionCard item={item} image={recognitionImages[item.id]} />
             </RevealOnScroll>
           ))}
         </div>

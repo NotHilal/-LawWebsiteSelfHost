@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import { areasOfInterest } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 
 type FormState = {
   name: string;
@@ -14,17 +14,6 @@ type FormState = {
   consent: boolean;
 };
 
-const initialState: FormState = {
-  name: "",
-  organization: "",
-  title: "",
-  email: "",
-  phone: "",
-  interest: areasOfInterest[0],
-  message: "",
-  consent: false,
-};
-
 type Status = "idle" | "loading" | "success" | "error";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -34,6 +23,20 @@ const inputClasses =
 const labelClasses = "text-xs uppercase tracking-[0.16em] text-summit-mute";
 
 export default function ContactForm() {
+  const { areasOfInterest, ui } = useContent();
+  const t = ui.forms;
+
+  const initialState: FormState = {
+    name: "",
+    organization: "",
+    title: "",
+    email: "",
+    phone: "",
+    interest: areasOfInterest[0].value,
+    message: "",
+    consent: false,
+  };
+
   const [form, setForm] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<Status>("idle");
@@ -44,11 +47,11 @@ export default function ContactForm() {
 
   function validate(): boolean {
     const next: Partial<Record<keyof FormState, string>> = {};
-    if (!form.name.trim()) next.name = "Full name is required.";
-    if (!form.email.trim()) next.email = "Email is required.";
-    else if (!emailPattern.test(form.email)) next.email = "Enter a valid email address.";
-    if (!form.message.trim()) next.message = "Please share a brief message.";
-    if (!form.consent) next.consent = "Consent is required to submit this form.";
+    if (!form.name.trim()) next.name = t.validation.nameRequired;
+    if (!form.email.trim()) next.email = t.validation.emailRequired;
+    else if (!emailPattern.test(form.email)) next.email = t.validation.emailInvalid;
+    if (!form.message.trim()) next.message = t.validation.messageRequired;
+    if (!form.consent) next.consent = t.validation.consentRequired;
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -82,11 +85,8 @@ export default function ContactForm() {
         role="status"
       >
         <CheckCircle2 className="h-8 w-8 text-summit-gold" aria-hidden="true" />
-        <h3 className="font-serif text-2xl text-summit-ivory">Thank you.</h3>
-        <p className="max-w-md text-sm leading-relaxed text-summit-mute">
-          Your request has been received. A member of Summit Management Consultancy will follow up
-          directly and in confidence.
-        </p>
+        <h3 className="font-serif text-2xl text-summit-ivory">{t.success.title}</h3>
+        <p className="max-w-md text-sm leading-relaxed text-summit-mute">{t.success.consultationBody}</p>
       </motion.div>
     );
   }
@@ -96,7 +96,7 @@ export default function ContactForm() {
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
         <div>
           <label htmlFor="name" className={labelClasses}>
-            Full Name *
+            {t.labels.fullName} *
           </label>
           <input
             id="name"
@@ -117,7 +117,7 @@ export default function ContactForm() {
 
         <div>
           <label htmlFor="organization" className={labelClasses}>
-            Organization
+            {t.labels.organization}
           </label>
           <input
             id="organization"
@@ -131,7 +131,7 @@ export default function ContactForm() {
 
         <div>
           <label htmlFor="title" className={labelClasses}>
-            Position / Title
+            {t.labels.title}
           </label>
           <input
             id="title"
@@ -145,7 +145,7 @@ export default function ContactForm() {
 
         <div>
           <label htmlFor="email" className={labelClasses}>
-            Email *
+            {t.labels.email} *
           </label>
           <input
             id="email"
@@ -166,13 +166,14 @@ export default function ContactForm() {
 
         <div>
           <label htmlFor="phone" className={labelClasses}>
-            Phone
+            {t.labels.phone}
           </label>
           <input
             id="phone"
             type="tel"
             inputMode="tel"
             autoComplete="tel"
+            dir="ltr"
             value={form.phone}
             onChange={(e) => update("phone", e.target.value.replace(/[^\d+\s()-]/g, ""))}
             className={inputClasses}
@@ -181,7 +182,7 @@ export default function ContactForm() {
 
         <div>
           <label htmlFor="interest" className={labelClasses}>
-            Area of Interest
+            {t.labels.interest}
           </label>
           <select
             id="interest"
@@ -190,8 +191,8 @@ export default function ContactForm() {
             className={`${inputClasses} appearance-none`}
           >
             {areasOfInterest.map((opt) => (
-              <option key={opt} value={opt} className="bg-summit-charcoal">
-                {opt}
+              <option key={opt.value} value={opt.value} className="bg-summit-charcoal">
+                {opt.label}
               </option>
             ))}
           </select>
@@ -200,7 +201,7 @@ export default function ContactForm() {
 
       <div>
         <label htmlFor="message" className={labelClasses}>
-          Message *
+          {t.labels.message} *
         </label>
         <textarea
           id="message"
@@ -228,11 +229,7 @@ export default function ContactForm() {
             aria-invalid={!!errors.consent}
             aria-describedby={errors.consent ? "consent-error" : undefined}
           />
-          <span>
-            I consent to Summit Management Consultancy processing the information provided in
-            order to respond to this enquiry, in accordance with the practice&rsquo;s privacy
-            practices.
-          </span>
+          <span>{t.consentConsultation}</span>
         </label>
         {errors.consent && (
           <p id="consent-error" className="mt-2 text-xs text-red-400">
@@ -251,7 +248,7 @@ export default function ContactForm() {
             role="alert"
           >
             <AlertCircle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
-            <span>Something went wrong sending your request. Please try again, or reach out directly.</span>
+            <span>{t.error.consultation}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -262,7 +259,7 @@ export default function ContactForm() {
         className="group relative inline-flex items-center gap-3 bg-summit-gold px-8 py-4 text-xs font-medium uppercase tracking-[0.18em] text-summit-black transition-colors duration-300 hover:bg-summit-gold-soft disabled:opacity-60"
       >
         {status === "loading" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-        {status === "loading" ? "Sending" : "Request a Confidential Consultation"}
+        {status === "loading" ? t.submit.sending : t.submit.consultation}
       </button>
     </form>
   );

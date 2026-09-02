@@ -19,7 +19,17 @@ function ai(): GoogleGenAI {
   return client;
 }
 
-const AREAS_OF_INTEREST = [
+type Lang = "en" | "fr" | "ar";
+
+function toLang(value: unknown): Lang {
+  return value === "fr" || value === "ar" ? value : "en";
+}
+
+/**
+ * Canonical (English) category values — what gets stored in the database and
+ * shown in the admin dashboard, regardless of the visitor's language.
+ */
+const AREAS_CANON = [
   "Strategic Advisory",
   "Project Management",
   "Tender / Procurement Advisory",
@@ -31,6 +41,49 @@ const AREAS_OF_INTEREST = [
   "Other",
 ];
 
+/** Localized category labels — kept index-aligned with AREAS_CANON. */
+const AREAS_I18N: Record<Lang, string[]> = {
+  en: AREAS_CANON,
+  fr: [
+    "Conseil stratégique",
+    "Gestion de projet",
+    "Conseil en appels d'offres / passation de marchés",
+    "Appui à la décision des dirigeants",
+    "Stratégie contractuelle et commerciale",
+    "Appui aux réclamations / différends",
+    "Appui aux cabinets juridiques",
+    "Conseil gouvernemental / institutionnel",
+    "Autre",
+  ],
+  ar: [
+    "الاستشارات الاستراتيجية",
+    "إدارة المشاريع",
+    "استشارات المناقصات / المشتريات",
+    "دعم القرار التنفيذي",
+    "الاستراتيجية التعاقدية والتجارية",
+    "دعم المطالبات / المنازعات",
+    "دعم الممارسة القانونية",
+    "الاستشارات الحكومية / المؤسسية",
+    "أخرى",
+  ],
+};
+
+/** Maps whatever the model passed back (localized or English) to a canonical value. */
+function toCanonicalInterest(value: string | undefined, lang: Lang): string {
+  const needle = (value ?? "").trim().toLowerCase();
+  if (!needle) return "";
+  const localized = AREAS_I18N[lang].findIndex((v) => v.toLowerCase() === needle);
+  if (localized >= 0) return AREAS_CANON[localized];
+  const english = AREAS_CANON.findIndex((v) => v.toLowerCase() === needle);
+  return english >= 0 ? AREAS_CANON[english] : (value ?? "").trim();
+}
+
+const LANG_DIRECTIVE: Record<Lang, string> = {
+  en: "",
+  fr: " Always write your replies in French (français), regardless of the language the visitor uses, unless the visitor explicitly asks you to switch.",
+  ar: " Always write your replies in Modern Standard Arabic (العربية الفصحى), regardless of the language the visitor uses, unless the visitor explicitly asks you to switch.",
+};
+
 const presentCategoryChoices = {
   name: "present_category_choices",
   description:
@@ -38,31 +91,34 @@ const presentCategoryChoices = {
   parameters: { type: Type.OBJECT, properties: {} },
 };
 
-const submitConsultationRequest = {
-  name: "submit_consultation_request",
-  description:
-    "Submits a consultation request to the Summit Management Consultancy team once the visitor has provided their name, email, a description, and a category, and has explicitly confirmed they want to send it.",
-  parameters: {
-    type: Type.OBJECT,
-    properties: {
-      name: { type: Type.STRING, description: "The visitor's name — a first name alone is fine." },
-      email: { type: Type.STRING, description: "The visitor's email address." },
-      message: {
-        type: Type.STRING,
-        description: "A brief summary of what the visitor needs help with.",
+function buildSubmitConsultationRequest(lang: Lang) {
+  return {
+    name: "submit_consultation_request",
+    description:
+      "Submits a consultation request to the Summit Management Consultancy team once the visitor has provided their name, email, a description, and a category, and has explicitly confirmed they want to send it.",
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        name: { type: Type.STRING, description: "The visitor's name — a first name alone is fine." },
+        email: { type: Type.STRING, description: "The visitor's email address." },
+        message: {
+          type: Type.STRING,
+          description: "A brief summary of what the visitor needs help with.",
+        },
+        organization: { type: Type.STRING, description: "The visitor's organization, if given." },
+        title: { type: Type.STRING, description: "The visitor's job title, if given." },
+        phone: { type: Type.STRING, description: "The visitor's phone number, if given." },
+        interest: {
+          type: Type.STRING,
+          enum: AREAS_I18N[lang],
+          description:
+            "The area of interest the visitor selected — pass back the exact option string they picked from the list shown to them.",
+        },
       },
-      organization: { type: Type.STRING, description: "The visitor's organization, if given." },
-      title: { type: Type.STRING, description: "The visitor's job title, if given." },
-      phone: { type: Type.STRING, description: "The visitor's phone number, if given." },
-      interest: {
-        type: Type.STRING,
-        enum: AREAS_OF_INTEREST,
-        description: "The area of interest the visitor selected from the fixed category list.",
-      },
+      required: ["name", "email", "message", "interest"],
     },
-    required: ["name", "email", "message", "interest"],
-  },
-};
+  };
+}
 
 const submitQuestion = {
   name: "submit_question",
@@ -82,11 +138,7 @@ const submitQuestion = {
   },
 };
 
-const TOOLS = [
-  { functionDeclarations: [presentCategoryChoices, submitConsultationRequest, submitQuestion] },
-];
-
-const SYSTEM_INSTRUCTION =
+const SYSTEM_INSTRUCTION_BASE =
   "You are an assistant for Summit Management Consultancy, based in Doha, Qatar. Answer general questions about practice areas. You are not a lawyer and do not give legal advice. Never ask for confidential case details. " +
   "You cannot book, schedule, or confirm appointments yourself, and you have no calendar access — never say you will check availability or confirm a booking. " +
   "There are two distinct things a visitor might want, and you should keep them separate: a full consultation request, or just a one-off question they want answered by email. " +
@@ -110,16 +162,27 @@ function toContents(history: ChatTurn[]): Content[] {
   }));
 }
 
-const genConfig = {
-  systemInstruction: SYSTEM_INSTRUCTION,
-  tools: TOOLS,
-  toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
-};
+function buildConfig(lang: Lang) {
+  return {
+    systemInstruction: SYSTEM_INSTRUCTION_BASE + LANG_DIRECTIVE[lang],
+    tools: [
+      {
+        functionDeclarations: [
+          presentCategoryChoices,
+          buildSubmitConsultationRequest(lang),
+          submitQuestion,
+        ],
+      },
+    ],
+    toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
+  };
+}
 
 const router = Router();
 
 router.post("/", async (req, res) => {
   const body = req.body ?? {};
+  const lang = toLang(body.lang);
   const rawMessages = Array.isArray(body.messages) ? body.messages : null;
   const history: ChatTurn[] = rawMessages
     ? rawMessages
@@ -138,6 +201,8 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ message: "Missing messages" });
   }
 
+  const genConfig = buildConfig(lang);
+
   try {
     const contents = toContents(history);
     const response = await ai().models.generateContent({
@@ -152,7 +217,7 @@ router.post("/", async (req, res) => {
     }
 
     if (call.name === "present_category_choices") {
-      const followUp = await runFunctionResponseTurn(contents, response, call.name, {
+      const followUp = await runFunctionResponseTurn(contents, response, call.name, genConfig, {
         acknowledged: true,
       });
       return res.status(200).json({ reply: followUp, showCategoryPicker: true });
@@ -160,11 +225,12 @@ router.post("/", async (req, res) => {
 
     if (call.name === "submit_consultation_request") {
       const args = (call.args ?? {}) as Record<string, string | undefined>;
+      const interest = toCanonicalInterest(args.interest, lang);
       const submitted = !!(
         args.name?.trim() &&
         args.email?.trim() &&
         args.message?.trim() &&
-        args.interest?.trim()
+        interest
       );
 
       if (submitted) {
@@ -176,7 +242,7 @@ router.post("/", async (req, res) => {
           title: args.title?.trim() ?? "",
           email: args.email!.trim(),
           phone: args.phone?.trim() ?? "",
-          interest: args.interest!.trim(),
+          interest,
           message: args.message!.trim(),
           created_at: new Date().toISOString(),
         });
@@ -186,6 +252,7 @@ router.post("/", async (req, res) => {
         contents,
         response,
         call.name,
+        genConfig,
         submitted
           ? { success: true }
           : { success: false, error: "Missing required fields: name, email, message, or interest." },
@@ -216,6 +283,7 @@ router.post("/", async (req, res) => {
         contents,
         response,
         call.name,
+        genConfig,
         submitted ? { success: true } : { success: false, error: "Missing required fields: email or question." },
       );
       return res.status(200).json({ reply: followUp });
@@ -232,6 +300,7 @@ async function runFunctionResponseTurn(
   contents: Content[],
   response: Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>,
   functionName: string,
+  genConfig: ReturnType<typeof buildConfig>,
   functionResult: Record<string, unknown>,
 ): Promise<string> {
   const modelTurn = response.candidates?.[0]?.content;

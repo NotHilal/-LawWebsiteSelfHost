@@ -1,15 +1,16 @@
 import { useEffect } from "react";
-import { brand, contact, collaboration } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 
 /** Injects Organization / ProfessionalService JSON-LD using only verified fields. */
 export default function StructuredData() {
+  const { brand, contact, collaboration, seo } = useContent();
+
   useEffect(() => {
     const data: Record<string, unknown> = {
       "@context": "https://schema.org",
       "@type": "ProfessionalService",
       name: brand.name,
-      description:
-        "Executive strategic advisory, project lifecycle management, government and institutional consulting, commercial strategy, and legal-support expertise in Qatar and the GCC.",
+      description: seo.home.description,
       areaServed: ["Qatar", "GCC"],
       address: {
         "@type": "PostalAddress",
@@ -30,7 +31,7 @@ export default function StructuredData() {
       document.head.appendChild(script);
     }
     script.textContent = JSON.stringify(data);
-  }, []);
+  }, [brand.name, contact.address, contact.email, contact.phones, collaboration.url, seo.home.description]);
 
   return null;
 }

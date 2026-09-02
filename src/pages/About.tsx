@@ -5,15 +5,16 @@ import WhySummit from "../components/WhySummit";
 import ExecutiveProfile from "../components/ExecutiveProfile";
 import PrinciplesSection from "../components/PrinciplesSection";
 import ConsultationCTA from "../components/ConsultationCTA";
-import { seo, introduction } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 
 export default function About() {
+  const { pages, introduction } = useContent();
   return (
     <>
-      <Seo title={seo.about.title} description={seo.about.description} />
+      <Seo page="about" />
       <PageHeader
-        eyebrow="About Summit"
-        title="An elite practice built on public-sector and executive experience."
+        eyebrow={pages.about.eyebrow}
+        title={pages.about.title}
         copy={introduction.paragraphs[0]}
       />
       <Introduction />

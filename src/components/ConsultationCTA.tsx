@@ -1,9 +1,10 @@
-import { consultation } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 import RevealOnScroll from "./RevealOnScroll";
 import GoldDivider from "./GoldDivider";
 import Cta from "./Cta";
 
 export default function ConsultationCTA() {
+  const { consultation } = useContent();
   return (
     <section className="bg-summit-black py-24 sm:py-28">
       <div className="mx-auto max-w-3xl px-6 text-center sm:px-10">

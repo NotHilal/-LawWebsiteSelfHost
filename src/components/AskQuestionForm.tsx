@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { useContent } from "../i18n/useContent";
 
 type FormState = {
   name: string;
@@ -27,6 +28,8 @@ const inputClasses =
 const labelClasses = "text-xs uppercase tracking-[0.16em] text-summit-mute";
 
 export default function AskQuestionForm() {
+  const { ui } = useContent();
+  const t = ui.forms;
   const [form, setForm] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<Status>("idle");
@@ -37,11 +40,11 @@ export default function AskQuestionForm() {
 
   function validate(): boolean {
     const next: Partial<Record<keyof FormState, string>> = {};
-    if (!form.name.trim()) next.name = "Name is required.";
-    if (!form.email.trim()) next.email = "Email is required.";
-    else if (!emailPattern.test(form.email)) next.email = "Enter a valid email address.";
-    if (!form.message.trim()) next.message = "Please share your question.";
-    if (!form.consent) next.consent = "Consent is required to submit this form.";
+    if (!form.name.trim()) next.name = t.validation.nameRequiredShort;
+    if (!form.email.trim()) next.email = t.validation.emailRequired;
+    else if (!emailPattern.test(form.email)) next.email = t.validation.emailInvalid;
+    if (!form.message.trim()) next.message = t.validation.questionRequired;
+    if (!form.consent) next.consent = t.validation.consentRequired;
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -75,11 +78,8 @@ export default function AskQuestionForm() {
         role="status"
       >
         <CheckCircle2 className="h-8 w-8 text-summit-gold" aria-hidden="true" />
-        <h3 className="font-serif text-2xl text-summit-ivory">Thank you.</h3>
-        <p className="max-w-md text-sm leading-relaxed text-summit-mute">
-          Your question has been received. A member of Summit Management Consultancy will reply
-          by email.
-        </p>
+        <h3 className="font-serif text-2xl text-summit-ivory">{t.success.title}</h3>
+        <p className="max-w-md text-sm leading-relaxed text-summit-mute">{t.success.questionBody}</p>
       </motion.div>
     );
   }
@@ -89,7 +89,7 @@ export default function AskQuestionForm() {
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
         <div>
           <label htmlFor="ask-name" className={labelClasses}>
-            Name *
+            {t.labels.name} *
           </label>
           <input
             id="ask-name"
@@ -110,7 +110,7 @@ export default function AskQuestionForm() {
 
         <div>
           <label htmlFor="ask-email" className={labelClasses}>
-            Email *
+            {t.labels.email} *
           </label>
           <input
             id="ask-email"
@@ -131,13 +131,14 @@ export default function AskQuestionForm() {
 
         <div>
           <label htmlFor="ask-phone" className={labelClasses}>
-            Phone
+            {t.labels.phone}
           </label>
           <input
             id="ask-phone"
             type="tel"
             inputMode="tel"
             autoComplete="tel"
+            dir="ltr"
             value={form.phone}
             onChange={(e) => update("phone", e.target.value.replace(/[^\d+\s()-]/g, ""))}
             className={inputClasses}
@@ -147,7 +148,7 @@ export default function AskQuestionForm() {
 
       <div>
         <label htmlFor="ask-message" className={labelClasses}>
-          Your Question *
+          {t.labels.question} *
         </label>
         <textarea
           id="ask-message"
@@ -175,11 +176,7 @@ export default function AskQuestionForm() {
             aria-invalid={!!errors.consent}
             aria-describedby={errors.consent ? "ask-consent-error" : undefined}
           />
-          <span>
-            I consent to Summit Management Consultancy processing the information provided in
-            order to respond to this question, in accordance with the practice&rsquo;s privacy
-            practices.
-          </span>
+          <span>{t.consentQuestion}</span>
         </label>
         {errors.consent && (
           <p id="ask-consent-error" className="mt-2 text-xs text-red-400">
@@ -198,7 +195,7 @@ export default function AskQuestionForm() {
             role="alert"
           >
             <AlertCircle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
-            <span>Something went wrong sending your question. Please try again, or reach out directly.</span>
+            <span>{t.error.question}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -209,7 +206,7 @@ export default function AskQuestionForm() {
         className="group relative inline-flex items-center gap-3 bg-summit-gold px-8 py-4 text-xs font-medium uppercase tracking-[0.18em] text-summit-black transition-colors duration-300 hover:bg-summit-gold-soft disabled:opacity-60"
       >
         {status === "loading" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-        {status === "loading" ? "Sending" : "Submit Your Question"}
+        {status === "loading" ? t.submit.sending : t.submit.question}
       </button>
     </form>
   );

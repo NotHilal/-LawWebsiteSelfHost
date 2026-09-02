@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { hero } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 import { media } from "../data/media";
 import Cta from "./Cta";
 import GoldDivider from "./GoldDivider";
@@ -7,6 +7,7 @@ import GoldDivider from "./GoldDivider";
 const easing = [0.16, 1, 0.3, 1] as const;
 
 export default function Hero() {
+  const { hero } = useContent();
   const reduceMotion = useReducedMotion();
 
   return (
@@ -119,7 +120,7 @@ export default function Hero() {
             />
             <img
               src={media.heroPortrait}
-              alt="Portrait of Soukeina Awdeh, Founder and Lead Advisor at Summit Management Consultancy"
+              alt={hero.portraitAlt}
               className="h-full w-full object-cover"
               style={{ objectPosition: "50% 20%" }}
               loading="eager"

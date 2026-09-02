@@ -47,6 +47,22 @@
     font-feature-settings: "liga" 1, "kern" 1;
   }
 
+  /* Arabic: swap in Arabic-capable faces and neutralise Latin-oriented
+     letter-spacing (which breaks Arabic glyph joining). Uppercase is a no-op
+     on Arabic so it can stay. */
+  :root[lang="ar"] {
+    --font-sans: "IBM Plex Sans Arabic", "Inter", system-ui, sans-serif;
+    --font-serif: "Amiri", "Cormorant Garamond", Georgia, serif;
+  }
+
+  [dir="rtl"] * {
+    letter-spacing: normal !important;
+  }
+
+  [dir="rtl"] body {
+    font-feature-settings: normal;
+  }
+
   ::selection {
     background: var(--color-summit-gold);
     color: var(--color-summit-black);

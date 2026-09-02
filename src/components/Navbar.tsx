@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { motion } from "framer-motion";
-import { nav } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 import { media } from "../data/media";
 import MobileMenu from "./MobileMenu";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function Navbar() {
+  const { nav, ui } = useContent();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -36,7 +38,7 @@ export default function Navbar() {
             : "bg-transparent border-b border-transparent"
         }`}
       >
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-4 sm:px-10 lg:px-14">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-6 py-4 sm:px-10 lg:px-8 xl:px-14">
           <Link to="/" className="flex items-center gap-3" aria-label="Summit Management Consultancy — Home">
             <img src={media.emblem} alt="" role="presentation" className="h-9 w-auto" />
             <span className="flex flex-col leading-tight">
@@ -49,7 +51,7 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-5 xl:gap-7 lg:flex" aria-label="Primary">
+          <nav className="hidden items-center gap-4 xl:gap-7 lg:flex" aria-label="Primary">
             {nav.slice(1).map((item) => (
               <NavLink
                 key={item.to}
@@ -64,7 +66,7 @@ export default function Navbar() {
                   <>
                     {item.shortLabel ?? item.label}
                     <span
-                      className={`absolute -bottom-1 left-0 h-px bg-summit-gold transition-all duration-300 ${
+                      className={`absolute -bottom-1 start-0 h-px bg-summit-gold transition-all duration-300 ${
                         isActive ? "w-full" : "w-0 group-hover:w-full"
                       }`}
                     />
@@ -74,18 +76,18 @@ export default function Navbar() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-2.5 sm:gap-3 xl:gap-4">
             <Link
               to="/ask-a-question"
-              className="hidden whitespace-nowrap border border-summit-gold/60 px-4 py-2.5 text-[0.68rem] font-medium tracking-[0.1em] uppercase text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10 lg:inline-block"
+              className="hidden whitespace-nowrap border border-summit-gold/60 px-3.5 py-2.5 text-[0.68rem] font-medium tracking-[0.1em] uppercase text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10 lg:inline-block xl:px-4"
             >
-              Ask a Question
+              {ui.navCta.askQuestion}
             </Link>
             <Link
               to="/contact"
-              className="hidden whitespace-nowrap border border-summit-gold/60 px-4 py-2.5 text-[0.68rem] font-medium tracking-[0.1em] uppercase text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10 lg:inline-block"
+              className="hidden whitespace-nowrap border border-summit-gold/60 px-3.5 py-2.5 text-[0.68rem] font-medium tracking-[0.1em] uppercase text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10 lg:inline-block xl:px-4"
             >
-              Request a Consultation
+              {ui.navCta.requestConsultation}
             </Link>
             <button
               type="button"
@@ -96,6 +98,9 @@ export default function Navbar() {
             >
               <Menu className="h-6 w-6" />
             </button>
+            {/* Kept last so it sits at the far edge of the header — right in LTR,
+                left in RTL (Arabic). */}
+            <LanguageSwitcher />
           </div>
         </div>
       </motion.header>

@@ -3,10 +3,13 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring } from "framer-motion";
 import { CreditCard, RotateCw, X } from "lucide-react";
 import { media } from "../data/media";
+import { useContent } from "../i18n/useContent";
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 export default function BusinessCard() {
+  const { ui } = useContent();
+  const t = ui.businessCard;
   const [open, setOpen] = useState(false);
   const dragState = useRef<{ x: number; y: number; rotateX: number; rotateY: number } | null>(null);
 
@@ -54,7 +57,7 @@ export default function BusinessCard() {
         className="group relative inline-flex items-center gap-3 border border-summit-gold/60 px-8 py-4 text-xs font-medium uppercase tracking-[0.18em] text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10"
       >
         <CreditCard className="h-4 w-4 text-summit-gold" aria-hidden="true" />
-        Get My Card
+        {t.open}
       </button>
 
       <AnimatePresence>
@@ -67,14 +70,14 @@ export default function BusinessCard() {
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             role="dialog"
             aria-modal="true"
-            aria-label="Digital business card"
+            aria-label={t.dialogLabel}
           >
             <div className="relative w-full max-w-md">
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="absolute -top-9 right-0 p-2 text-summit-ivory transition-colors hover:text-summit-gold"
-                aria-label="Close card"
+                className="absolute -top-9 end-0 p-2 text-summit-ivory transition-colors hover:text-summit-gold"
+                aria-label={t.close}
               >
                 <X className="h-6 w-6" />
               </button>
@@ -97,14 +100,14 @@ export default function BusinessCard() {
                 >
                   <img
                     src={media.businessCardFront}
-                    alt="Summit Management Consultancy business card — front"
+                    alt={t.frontAlt}
                     draggable={false}
                     className="absolute inset-0 h-full w-full rounded-xl object-cover shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)]"
                     style={{ backfaceVisibility: "hidden" }}
                   />
                   <img
                     src={media.businessCardBack}
-                    alt="Summit Management Consultancy business card — back, with contact details for Soukeina Awdeh, Managing Director"
+                    alt={t.backAlt}
                     draggable={false}
                     className="absolute inset-0 h-full w-full rounded-xl object-cover shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)]"
                     style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
@@ -114,16 +117,14 @@ export default function BusinessCard() {
             </div>
 
             <div className="flex flex-col items-center gap-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-summit-mute">
-                Drag the card to turn it around
-              </p>
+              <p className="text-xs uppercase tracking-[0.2em] text-summit-mute">{t.drag}</p>
               <button
                 type="button"
                 onClick={flip}
                 className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-summit-gold transition-colors hover:text-summit-gold-soft"
               >
                 <RotateCw className="h-4 w-4" aria-hidden="true" />
-                Flip card
+                {t.flip}
               </button>
             </div>
           </motion.div>

@@ -1,9 +1,9 @@
 import { useEffect } from "react";
+import { useContent, useLang } from "../i18n/useContent";
+import { metaFor } from "../i18n";
+import type { SiteContent } from "../i18n";
 
-type SeoProps = {
-  title: string;
-  description: string;
-};
+type SeoPage = keyof SiteContent["seo"];
 
 function setMeta(attr: "name" | "property", key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
@@ -15,14 +15,22 @@ function setMeta(attr: "name" | "property", key: string, content: string) {
   el.setAttribute("content", content);
 }
 
-/** Updates document title and meta/OG tags per route. No external dependency required. */
-export default function Seo({ title, description }: SeoProps) {
+/**
+ * Updates document title and meta/OG tags per route and per language.
+ * No external dependency required.
+ */
+export default function Seo({ page }: { page: SeoPage }) {
+  const { seo } = useContent();
+  const { lang } = useLang();
+  const { title, description } = seo[page];
+
   useEffect(() => {
     document.title = title;
     setMeta("name", "description", description);
     setMeta("property", "og:title", title);
     setMeta("property", "og:description", description);
     setMeta("property", "og:url", window.location.href);
+    setMeta("property", "og:locale", metaFor(lang).locale);
     setMeta("name", "twitter:title", title);
     setMeta("name", "twitter:description", description);
 
@@ -33,7 +41,7 @@ export default function Seo({ title, description }: SeoProps) {
       document.head.appendChild(canonical);
     }
     canonical.setAttribute("href", window.location.href);
-  }, [title, description]);
+  }, [title, description, lang]);
 
   return null;
 }

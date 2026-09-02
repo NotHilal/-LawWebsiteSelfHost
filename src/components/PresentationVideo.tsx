@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Play } from "lucide-react";
-import { presentationVideo } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 import SectionLabel from "./SectionLabel";
 import GoldDivider from "./GoldDivider";
 import RevealOnScroll from "./RevealOnScroll";
@@ -9,6 +9,7 @@ import RevealOnScroll from "./RevealOnScroll";
 const easing = [0.16, 1, 0.3, 1] as const;
 
 export default function PresentationVideo() {
+  const { presentationVideo } = useContent();
   const reduceMotion = useReducedMotion();
   const [playing, setPlaying] = useState(false);
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus } from "lucide-react";
-import type { ExpertiseGroup } from "../data/siteContent";
+import type { ExpertiseGroup } from "../i18n";
 
 const easing = [0.16, 1, 0.3, 1] as const;
 
@@ -14,7 +14,7 @@ export default function ExpertiseCard({ group, defaultOpen = false }: { group: E
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-start justify-between gap-6 text-left"
+        className="flex w-full items-start justify-between gap-6 text-start"
       >
         <div className="flex gap-6 sm:gap-10">
           <span className="font-serif text-2xl text-summit-gold/70 sm:text-3xl">{group.number}</span>
@@ -45,7 +45,7 @@ export default function ExpertiseCard({ group, defaultOpen = false }: { group: E
             transition={{ duration: 0.5, ease: easing }}
             className="overflow-hidden"
           >
-            <div className="grid grid-cols-1 gap-8 pl-0 pt-8 sm:grid-cols-2 sm:pl-[4.5rem] lg:pl-[5.5rem]">
+            <div className="grid grid-cols-1 gap-8 ps-0 pt-8 sm:grid-cols-2 sm:ps-[4.5rem] lg:ps-[5.5rem]">
               {group.subsections.map((sub) => (
                 <div key={sub.heading}>
                   <p className="text-xs font-medium uppercase tracking-[0.16em] text-summit-gold">
@@ -63,7 +63,7 @@ export default function ExpertiseCard({ group, defaultOpen = false }: { group: E
               ))}
             </div>
             {group.note && (
-              <p className="mt-6 max-w-2xl pl-0 text-sm italic leading-relaxed text-summit-mute sm:pl-[4.5rem] lg:pl-[5.5rem]">
+              <p className="mt-6 max-w-2xl ps-0 text-sm italic leading-relaxed text-summit-mute sm:ps-[4.5rem] lg:ps-[5.5rem]">
                 {group.note}
               </p>
             )}

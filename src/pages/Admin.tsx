@@ -14,6 +14,10 @@ import {
   Trash2,
 } from "lucide-react";
 import { media } from "../data/media";
+import { useContent } from "../i18n/useContent";
+import type { SiteContent } from "../i18n";
+
+type AdminStrings = SiteContent["ui"]["admin"];
 
 type RequestType = "consultation" | "question";
 
@@ -46,29 +50,32 @@ function useNoIndex() {
   }, []);
 }
 
-function relativeTime(iso: string): string {
+function relativeTime(iso: string, justNow: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const minutes = Math.floor(diffMs / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return justNow;
+  if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return `${days}d`;
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
 export default function Admin() {
   useNoIndex();
+  const { ui } = useContent();
+  const t = ui.admin;
 
   const [token, setToken] = useState<string | null>(() => sessionStorage.getItem(TOKEN_KEY));
 
   if (!token) {
-    return <LoginView onLogin={(t) => setToken(t)} />;
+    return <LoginView t={t} onLogin={(next) => setToken(next)} />;
   }
 
   return (
     <RequestsView
+      t={t}
       token={token}
       onLogout={() => {
         sessionStorage.removeItem(TOKEN_KEY);
@@ -78,7 +85,7 @@ export default function Admin() {
   );
 }
 
-function LoginView({ onLogin }: { onLogin: (token: string) => void }) {
+function LoginView({ t, onLogin }: { t: AdminStrings; onLogin: (token: string) => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -96,12 +103,12 @@ function LoginView({ onLogin }: { onLogin: (token: string) => void }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.token) {
-        throw new Error(data.message || `Login failed (server returned ${res.status})`);
+        throw new Error(data.message || `${t.loginFailed} (${res.status})`);
       }
       sessionStorage.setItem(TOKEN_KEY, data.token);
       onLogin(data.token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : t.loginFailed);
     } finally {
       setLoading(false);
     }
@@ -113,8 +120,8 @@ function LoginView({ onLogin }: { onLogin: (token: string) => void }) {
         to="/"
         className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-summit-mute transition-colors hover:text-summit-gold"
       >
-        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-        Back to Homepage
+        <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
+        {t.backToHome}
       </Link>
       <form
         onSubmit={handleSubmit}
@@ -122,14 +129,14 @@ function LoginView({ onLogin }: { onLogin: (token: string) => void }) {
       >
         <div className="flex flex-col items-center text-center">
           <img src={media.emblem} alt="" role="presentation" className="h-10 w-auto opacity-90" />
-          <p className="mt-5 text-xs font-medium uppercase tracking-[0.28em] text-summit-gold">Admin</p>
-          <h1 className="mt-2 font-serif text-2xl text-summit-ivory">Client Requests</h1>
+          <p className="mt-5 text-xs font-medium uppercase tracking-[0.28em] text-summit-gold">{t.label}</p>
+          <h1 className="mt-2 font-serif text-2xl text-summit-ivory">{t.loginTitle}</h1>
         </div>
 
         <div className="mt-8 space-y-5">
           <div>
             <label htmlFor="admin-email" className="text-xs uppercase tracking-[0.16em] text-summit-mute">
-              Email
+              {t.email}
             </label>
             <input
               id="admin-email"
@@ -144,7 +151,7 @@ function LoginView({ onLogin }: { onLogin: (token: string) => void }) {
 
           <div>
             <label htmlFor="admin-password" className="text-xs uppercase tracking-[0.16em] text-summit-mute">
-              Password
+              {t.password}
             </label>
             <input
               id="admin-password"
@@ -165,7 +172,7 @@ function LoginView({ onLogin }: { onLogin: (token: string) => void }) {
             className="inline-flex w-full items-center justify-center gap-3 bg-summit-gold px-8 py-4 text-xs font-medium uppercase tracking-[0.18em] text-summit-black transition-colors duration-300 hover:bg-summit-gold-soft disabled:opacity-60"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-            {loading ? "Signing in" : "Sign In"}
+            {loading ? t.signingIn : t.signIn}
           </button>
         </div>
       </form>
@@ -175,12 +182,15 @@ function LoginView({ onLogin }: { onLogin: (token: string) => void }) {
 
 type Filter = "all" | "unread";
 
-const TABS: { value: RequestType; label: string }[] = [
-  { value: "consultation", label: "Requests" },
-  { value: "question", label: "Questions" },
-];
-
-function RequestsView({ token, onLogout }: { token: string; onLogout: () => void }) {
+function RequestsView({
+  t,
+  token,
+  onLogout,
+}: {
+  t: AdminStrings;
+  token: string;
+  onLogout: () => void;
+}) {
   const [requests, setRequests] = useState<ContactRequest[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -189,6 +199,11 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
   const [tab, setTab] = useState<RequestType>("consultation");
   const [deleting, setDeleting] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<ContactRequest | null>(null);
+
+  const tabs: { value: RequestType; label: string }[] = [
+    { value: "consultation", label: t.tabRequests },
+    { value: "question", label: t.tabQuestions },
+  ];
 
   async function load() {
     setStatus("loading");
@@ -278,33 +293,34 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
             to="/"
             className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-summit-mute transition-colors hover:text-summit-gold"
           >
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            Back to Homepage
+            <ArrowLeft className="h-3.5 w-3.5 rtl:-scale-x-100" aria-hidden="true" />
+            {t.backToHome}
           </Link>
-          <p className="mt-3 text-xs font-medium uppercase tracking-[0.28em] text-summit-gold">Admin</p>
+          <p className="mt-3 text-xs font-medium uppercase tracking-[0.28em] text-summit-gold">{t.label}</p>
           <h1 className="mt-1 font-serif text-xl text-summit-ivory">
-            {tab === "consultation" ? "Client Requests" : "Questions"}
+            {tab === "consultation" ? t.requestsTitle : t.questionsTitle}
             {status === "ready" && (
-              <span className="ml-3 align-middle text-sm font-sans text-summit-mute">
-                {tabRequests.length} total{unreadCount > 0 && ` · ${unreadCount} unread`}
+              <span className="mx-3 align-middle text-sm font-sans text-summit-mute">
+                {tabRequests.length} {t.total}
+                {unreadCount > 0 && ` · ${unreadCount} ${t.unread}`}
               </span>
             )}
           </h1>
         </div>
         <div className="flex items-center gap-6">
           <div className="flex gap-2">
-            {TABS.map((t) => (
+            {tabs.map((tabItem) => (
               <button
-                key={t.value}
+                key={tabItem.value}
                 type="button"
-                onClick={() => switchTab(t.value)}
+                onClick={() => switchTab(tabItem.value)}
                 className={`border px-4 py-2 text-xs uppercase tracking-[0.16em] transition-colors ${
-                  tab === t.value
+                  tab === tabItem.value
                     ? "border-summit-gold text-summit-gold"
                     : "border-summit-graphite text-summit-mute hover:text-summit-ivory"
                 }`}
               >
-                {t.label}
+                {tabItem.label}
               </button>
             ))}
           </div>
@@ -314,42 +330,42 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
             className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-summit-mute transition-colors hover:text-summit-gold"
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
-            Log Out
+            {t.logOut}
           </button>
         </div>
       </header>
 
       {status === "loading" && (
         <div className="flex flex-1 items-center justify-center text-sm text-summit-mute">
-          <Loader2 className="mr-3 h-4 w-4 animate-spin" aria-hidden="true" />
-          Loading…
+          <Loader2 className="mx-3 h-4 w-4 animate-spin" aria-hidden="true" />
+          {t.loading}
         </div>
       )}
 
       {status === "error" && (
-        <div className="flex flex-1 items-center justify-center text-sm text-red-400">Couldn&rsquo;t load requests.</div>
+        <div className="flex flex-1 items-center justify-center text-sm text-red-400">{t.loadError}</div>
       )}
 
       {status === "ready" && (
         <div className="grid flex-1 grid-cols-1 lg:grid-cols-[380px_1fr]">
           {/* List column */}
           <div
-            className={`flex flex-col border-summit-graphite lg:border-r ${
+            className={`flex flex-col border-summit-graphite lg:border-e ${
               selected ? "hidden lg:flex" : "flex"
             }`}
           >
             <div className="flex-none space-y-3 border-b border-summit-graphite p-4">
               <div className="relative">
                 <Search
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-summit-mute-dark"
+                  className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-summit-mute-dark"
                   aria-hidden="true"
                 />
                 <input
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search name, email, message…"
-                  className="w-full border border-summit-graphite bg-transparent py-2 pl-9 pr-3 text-sm text-summit-ivory placeholder:text-summit-mute-dark focus:border-summit-gold focus:outline-none"
+                  placeholder={t.searchPlaceholder}
+                  className="w-full border border-summit-graphite bg-transparent py-2 ps-9 pe-3 text-sm text-summit-ivory placeholder:text-summit-mute-dark focus:border-summit-gold focus:outline-none"
                 />
               </div>
               <div className="flex gap-2">
@@ -364,7 +380,7 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                         : "border-summit-graphite text-summit-mute hover:text-summit-ivory"
                     }`}
                   >
-                    {f === "all" ? "All" : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ""}`}
+                    {f === "all" ? t.filterAll : `${t.filterUnread}${unreadCount > 0 ? ` (${unreadCount})` : ""}`}
                   </button>
                 ))}
               </div>
@@ -377,9 +393,9 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                   <p className="text-sm">
                     {tabRequests.length === 0
                       ? tab === "consultation"
-                        ? "No requests yet."
-                        : "No questions yet."
-                      : "No matches."}
+                        ? t.noRequests
+                        : t.noQuestions
+                      : t.noMatches}
                   </p>
                 </div>
               )}
@@ -388,7 +404,7 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                   key={req.id}
                   type="button"
                   onClick={() => openRequest(req)}
-                  className={`block w-full border-b border-summit-graphite px-5 py-4 text-left transition-colors hover:bg-summit-charcoal ${
+                  className={`block w-full border-b border-summit-graphite px-5 py-4 text-start transition-colors hover:bg-summit-charcoal ${
                     selectedId === req.id ? "bg-summit-charcoal" : ""
                   }`}
                 >
@@ -399,7 +415,9 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                         {req.name || req.email}
                       </span>
                     </span>
-                    <span className="flex-none text-[0.65rem] text-summit-mute-dark">{relativeTime(req.created_at)}</span>
+                    <span className="flex-none text-[0.65rem] text-summit-mute-dark">
+                      {relativeTime(req.created_at, t.justNow)}
+                    </span>
                   </div>
                   {req.organization && (
                     <p className="mt-0.5 truncate text-xs text-summit-mute">{req.organization}</p>
@@ -415,7 +433,7 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
             {!selected && (
               <div className="flex flex-1 flex-col items-center justify-center gap-3 text-summit-mute-dark">
                 <Inbox className="h-10 w-10" aria-hidden="true" />
-                <p className="text-sm">Select a request to view details.</p>
+                <p className="text-sm">{t.selectPrompt}</p>
               </div>
             )}
 
@@ -426,8 +444,8 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                   onClick={() => setSelectedId(null)}
                   className="mb-6 inline-flex items-center gap-1 text-xs uppercase tracking-[0.14em] text-summit-mute hover:text-summit-gold lg:hidden"
                 >
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                  Back
+                  <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
+                  {t.back}
                 </button>
 
                 <div className="flex flex-wrap items-start justify-between gap-4">
@@ -444,13 +462,13 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                       onClick={() => toggleRead(selected)}
                       className="border border-summit-graphite px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.14em] text-summit-mute transition-colors hover:border-summit-gold hover:text-summit-gold"
                     >
-                      {selected.read ? "Mark unread" : "Mark read"}
+                      {selected.read ? t.markUnread : t.markRead}
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirmTarget(selected)}
                       disabled={deleting}
-                      aria-label="Delete request"
+                      aria-label={t.deleteRequest}
                       className="border border-summit-graphite p-2 text-summit-mute transition-colors hover:border-red-400/60 hover:text-red-400 disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
@@ -466,12 +484,12 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                 </p>
 
                 <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-summit-graphite py-4 text-sm text-summit-ivory/80">
-                  <a href={`mailto:${selected.email}`} className="flex items-center gap-2 hover:text-summit-gold">
+                  <a href={`mailto:${selected.email}`} dir="ltr" className="flex items-center gap-2 hover:text-summit-gold">
                     <Mail className="h-3.5 w-3.5" aria-hidden="true" />
                     {selected.email}
                   </a>
                   {selected.phone && (
-                    <a href={`tel:${selected.phone}`} className="flex items-center gap-2 hover:text-summit-gold">
+                    <a href={`tel:${selected.phone}`} dir="ltr" className="flex items-center gap-2 hover:text-summit-gold">
                       <Phone className="h-3.5 w-3.5" aria-hidden="true" />
                       {selected.phone}
                     </a>
@@ -491,7 +509,7 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                   href={`mailto:${selected.email}?subject=${encodeURIComponent(`Re: your enquiry to Summit Management Consultancy`)}`}
                   className="mt-8 inline-flex items-center gap-3 bg-summit-gold px-6 py-3 text-xs font-medium uppercase tracking-[0.16em] text-summit-black transition-colors duration-300 hover:bg-summit-gold-soft"
                 >
-                  Reply by Email
+                  {t.replyByEmail}
                 </a>
               </div>
             )}
@@ -522,11 +540,12 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
             >
               <AlertTriangle className="h-8 w-8 text-red-400" aria-hidden="true" />
               <h2 id="delete-confirm-title" className="mt-4 font-serif text-xl text-summit-ivory">
-                Delete this {confirmTarget.type === "question" ? "question" : "request"}?
+                {confirmTarget.type === "question" ? t.deleteConfirmQuestion : t.deleteConfirmRequest}
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-summit-mute">
-                From <span className="text-summit-ivory/85">{confirmTarget.name || confirmTarget.email}</span>.
-                This can&rsquo;t be undone.
+                {t.deleteFrom}{" "}
+                <span className="text-summit-ivory/85">{confirmTarget.name || confirmTarget.email}</span>.{" "}
+                {t.deleteIrreversible}
               </p>
               <div className="mt-8 flex items-center justify-end gap-3">
                 <button
@@ -535,7 +554,7 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                   disabled={deleting}
                   className="border border-summit-graphite px-4 py-2.5 text-xs uppercase tracking-[0.16em] text-summit-mute transition-colors hover:text-summit-ivory disabled:opacity-50"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   type="button"
@@ -544,7 +563,7 @@ function RequestsView({ token, onLogout }: { token: string; onLogout: () => void
                   className="inline-flex items-center gap-2 bg-red-500/90 px-4 py-2.5 text-xs font-medium uppercase tracking-[0.16em] text-white transition-colors hover:bg-red-500 disabled:opacity-50"
                 >
                   {deleting && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-                  {deleting ? "Deleting" : "Delete"}
+                  {deleting ? t.deleting : t.delete}
                 </button>
               </div>
             </motion.div>

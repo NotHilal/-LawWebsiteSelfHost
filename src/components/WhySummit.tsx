@@ -1,14 +1,15 @@
-import { whySummit } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 import SectionLabel from "./SectionLabel";
 import GoldDivider from "./GoldDivider";
 import RevealOnScroll from "./RevealOnScroll";
 
 export default function WhySummit() {
+  const { whySummit, ui } = useContent();
   return (
     <section className="bg-summit-black py-24 text-summit-ivory sm:py-32">
       <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-14">
         <RevealOnScroll>
-          <SectionLabel>Why Summit</SectionLabel>
+          <SectionLabel>{ui.sectionLabels.whySummit}</SectionLabel>
           <GoldDivider className="my-6" />
           <h2 className="max-w-xl text-balance font-serif text-[clamp(2rem,3.6vw,3rem)] font-medium leading-[1.15]">
             {whySummit.heading}

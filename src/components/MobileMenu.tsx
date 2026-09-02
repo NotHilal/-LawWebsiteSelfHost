@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
 import { X } from "lucide-react";
-import { nav } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 import { media } from "../data/media";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 type MobileMenuProps = {
   open: boolean;
@@ -10,6 +11,8 @@ type MobileMenuProps = {
 };
 
 export default function MobileMenu({ open, onClose }: MobileMenuProps) {
+  const { nav, ui } = useContent();
+
   return (
     <AnimatePresence>
       {open && (
@@ -59,19 +62,22 @@ export default function MobileMenu({ open, onClose }: MobileMenuProps) {
           </nav>
 
           <div className="flex flex-col gap-3 px-8 pb-10">
+            <div className="mb-2 flex justify-center border-b border-summit-graphite pb-4">
+              <LanguageSwitcher variant="inline" />
+            </div>
             <NavLink
               to="/ask-a-question"
               onClick={onClose}
               className="block border border-summit-gold/60 py-4 text-center text-xs font-medium tracking-[0.2em] uppercase text-summit-ivory"
             >
-              Ask a Question
+              {ui.navCta.askQuestion}
             </NavLink>
             <NavLink
               to="/contact"
               onClick={onClose}
               className="block border border-summit-gold/60 py-4 text-center text-xs font-medium tracking-[0.2em] uppercase text-summit-ivory"
             >
-              Request a Consultation
+              {ui.navCta.requestConsultation}
             </NavLink>
           </div>
         </motion.div>

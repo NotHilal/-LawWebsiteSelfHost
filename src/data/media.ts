@@ -1,7 +1,11 @@
 /**
  * Supplied brand imagery, wired to editorial content that references it.
- * Kept separate from siteContent.ts because Vite resolves these as module
+ * Kept separate from the i18n dictionaries because Vite resolves these as module
  * imports (hashed, optimized) rather than plain strings.
+ *
+ * Award text (organization, category, alt text, …) lives in the i18n
+ * dictionaries under `recognition.items` and is merged with the image here by
+ * `id` at render time (see src/components/RecognitionSection.tsx).
  */
 import emblem from "../assets/emblem.webp";
 import portrait from "../assets/portrait.webp";
@@ -11,7 +15,6 @@ import awardQatarBLF from "../assets/award-qatar-blf.webp";
 import aiIcon from "../assets/chatbot-avatar.webp";
 import businessCardFront from "../assets/business-card-front.png";
 import businessCardBack from "../assets/business-card-back.png";
-import type { RecognitionItem } from "./siteContent";
 
 export const media = {
   emblem,
@@ -24,27 +27,8 @@ export const media = {
   businessCardBack,
 };
 
-export const recognitionItems: RecognitionItem[] = [
-  {
-    id: "qatar-business-law-forum-2024",
-    organization: "Qatar Business Law Forum",
-    category: "Legal Counsel of the Year",
-    status: "Winner",
-    year: "2024",
-    detail: "Soukeina Awdeh — Tadmur Holding WLL",
-    image: awardQatarBLF,
-    imageAlt:
-      "Qatar Business Law Forum award — Legal Counsel of the Year, Winner 2024, presented to Soukeina Awdeh, Tadmur Holding WLL",
-  },
-  {
-    id: "lexisnexis-mena-legal-awards-2025",
-    organization: "LexisNexis Middle East Legal Awards",
-    category: "In-House Team of the Year",
-    status: "Shortlisted",
-    year: "2025",
-    detail: "Middle East Legal Awards — In-House Team of the Year",
-    image: awardLexisNexis,
-    imageAlt:
-      "LexisNexis Middle East Legal Awards — Shortlisted 2025, In-House Team of the Year",
-  },
-];
+/** Award artwork keyed by the same `id` used in each dictionary's `recognition.items`. */
+export const recognitionImages: Record<string, string> = {
+  "qatar-business-law-forum-2024": awardQatarBLF,
+  "lexisnexis-mena-legal-awards-2025": awardLexisNexis,
+};

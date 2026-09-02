@@ -1,10 +1,11 @@
-import { introduction } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 import { media } from "../data/media";
 import SectionLabel from "./SectionLabel";
 import GoldDivider from "./GoldDivider";
 import RevealOnScroll from "./RevealOnScroll";
 
 export default function Introduction() {
+  const { introduction } = useContent();
   return (
     <section className="relative overflow-hidden bg-summit-black py-24 sm:py-32">
       <img

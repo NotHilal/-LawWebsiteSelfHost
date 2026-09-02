@@ -1,10 +1,11 @@
-import { executiveProfile } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 import { media } from "../data/media";
 import SectionLabel from "./SectionLabel";
 import GoldDivider from "./GoldDivider";
 import RevealOnScroll from "./RevealOnScroll";
 
 export default function ExecutiveProfile() {
+  const { executiveProfile, ui } = useContent();
   return (
     <section className="bg-summit-black py-24 sm:py-32">
       <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-14">
@@ -13,19 +14,19 @@ export default function ExecutiveProfile() {
             <div className="relative aspect-[3/4] overflow-hidden border border-summit-graphite">
               <img
                 src={media.portrait}
-                alt={`Portrait of ${executiveProfile.name}, ${executiveProfile.title} at Summit Management Consultancy`}
+                alt={`${executiveProfile.name} — ${executiveProfile.title}, Summit Management Consultancy`}
                 className="h-full w-full object-cover"
                 style={{ objectPosition: "50% 100%", transform: "scale(1.7)" }}
                 loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-summit-black/70 via-transparent to-transparent" />
             </div>
-            <div className="absolute -bottom-5 -right-5 hidden h-24 w-24 border border-summit-gold/40 sm:block" aria-hidden="true" />
+            <div className="absolute -bottom-5 -right-5 hidden h-24 w-24 border border-summit-gold/40 sm:block rtl:right-auto rtl:-left-5" aria-hidden="true" />
           </RevealOnScroll>
 
           <div>
             <RevealOnScroll delay={0.1}>
-              <SectionLabel>Leadership</SectionLabel>
+              <SectionLabel>{ui.sectionLabels.leadership}</SectionLabel>
               <GoldDivider className="my-6" />
               <h2 className="text-balance font-serif text-[clamp(2rem,3.6vw,2.9rem)] font-medium leading-[1.15] text-summit-ivory">
                 {executiveProfile.headline}

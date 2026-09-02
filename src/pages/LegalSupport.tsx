@@ -6,16 +6,17 @@ import SectionLabel from "../components/SectionLabel";
 import GoldDivider from "../components/GoldDivider";
 import CollaborationSection from "../components/CollaborationSection";
 import ConsultationCTA from "../components/ConsultationCTA";
-import { expertise, seo } from "../data/siteContent";
-
-const legalGroup = expertise[2];
+import { useContent } from "../i18n/useContent";
 
 export default function LegalSupport() {
+  const { expertise, pages } = useContent();
+  const legalGroup = expertise[2];
+
   return (
     <>
-      <Seo title={seo.legalSupport.title} description={seo.legalSupport.description} />
+      <Seo page="legalSupport" />
       <PageHeader
-        eyebrow="Legal Advisory Support"
+        eyebrow={pages.legalSupport.eyebrow}
         title={legalGroup.title}
         copy={legalGroup.summary}
       />
@@ -44,7 +45,7 @@ export default function LegalSupport() {
           </div>
 
           {legalGroup.note && (
-            <RevealOnScroll delay={0.2} className="mt-16 max-w-3xl border-l-2 border-summit-gold/50 pl-6">
+            <RevealOnScroll delay={0.2} className="mt-16 max-w-3xl border-s-2 border-summit-gold/50 ps-6">
               <p className="text-balance text-sm italic leading-relaxed text-summit-mute sm:text-base">
                 {legalGroup.note}
               </p>

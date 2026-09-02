@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { brand, contact, collaboration } from "../data/siteContent";
+import { useContent } from "../i18n/useContent";
 import { media } from "../data/media";
 import GoldDivider from "./GoldDivider";
 
 export default function Footer() {
+  const { brand, contact, collaboration, ui } = useContent();
   const year = new Date().getFullYear();
 
   return (
@@ -19,15 +20,26 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.24em] text-summit-mute">Contact</p>
+            <p className="text-xs font-medium uppercase tracking-[0.24em] text-summit-mute">
+              {ui.footer.contactHeading}
+            </p>
+            {/* `<bdi>` keeps the email / phone digits reading left-to-right
+                while the <li> itself still follows the page direction, so in
+                Arabic they sit flush-right, aligned with the heading above. */}
             <ul className="mt-5 space-y-3 text-sm text-summit-ivory/80">
-              {contact.email && <li>{contact.email}</li>}
+              {contact.email && (
+                <li>
+                  <bdi>{contact.email}</bdi>
+                </li>
+              )}
               {contact.phones.map((phone) => (
-                <li key={phone}>{phone}</li>
+                <li key={phone}>
+                  <bdi>{phone}</bdi>
+                </li>
               ))}
             </ul>
             <p className="mt-6 text-xs uppercase tracking-[0.2em] text-summit-mute">
-              Professional collaboration
+              {ui.footer.collaborationHeading}
             </p>
             <a
               href={collaboration.url}
@@ -42,9 +54,9 @@ export default function Footer() {
 
         <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-summit-graphite pt-8 text-xs text-summit-mute-dark sm:flex-row sm:items-center">
           <Link to="/admin" className="transition-colors hover:text-summit-mute">
-            © {year} {brand.name}. All rights reserved.
+            © {year} {brand.name}. {ui.footer.rights}
           </Link>
-          <p>Doha, Qatar</p>
+          <p>{contact.city}</p>
         </div>
       </div>
     </footer>
