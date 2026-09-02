@@ -2,13 +2,17 @@ import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { motion } from "framer-motion";
-import { useContent } from "../i18n/useContent";
+import { useContent, useLang } from "../i18n/useContent";
 import { media } from "../data/media";
 import MobileMenu from "./MobileMenu";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function Navbar() {
   const { nav, ui } = useContent();
+  const { dir } = useLang();
+  // Arabic script is hard to read at the tiny sizes used for Latin uppercase
+  // micro-labels, so bump the nav / CTA text a little in RTL.
+  const rtl = dir === "rtl";
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -57,9 +61,9 @@ export default function Navbar() {
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `group relative whitespace-nowrap py-1 text-[0.7rem] font-medium tracking-[0.12em] uppercase transition-colors ${
-                    isActive ? "text-summit-gold" : "text-summit-ivory/85 hover:text-summit-ivory"
-                  }`
+                  `group relative whitespace-nowrap py-1 font-medium tracking-[0.12em] uppercase transition-colors ${
+                    rtl ? "text-[0.9rem]" : "text-[0.7rem]"
+                  } ${isActive ? "text-summit-gold" : "text-summit-ivory/85 hover:text-summit-ivory"}`
                 }
               >
                 {({ isActive }) => (
@@ -79,13 +83,17 @@ export default function Navbar() {
           <div className="flex shrink-0 items-center gap-2.5 sm:gap-3 xl:gap-4">
             <Link
               to="/ask-a-question"
-              className="hidden whitespace-nowrap border border-summit-gold/60 px-3.5 py-2.5 text-[0.68rem] font-medium tracking-[0.1em] uppercase text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10 lg:inline-block xl:px-4"
+              className={`hidden whitespace-nowrap border border-summit-gold/60 px-3.5 py-2.5 font-medium tracking-[0.1em] uppercase text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10 lg:inline-block xl:px-4 ${
+                rtl ? "text-[0.82rem]" : "text-[0.68rem]"
+              }`}
             >
               {ui.navCta.askQuestion}
             </Link>
             <Link
               to="/contact"
-              className="hidden whitespace-nowrap border border-summit-gold/60 px-3.5 py-2.5 text-[0.68rem] font-medium tracking-[0.1em] uppercase text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10 lg:inline-block xl:px-4"
+              className={`hidden whitespace-nowrap border border-summit-gold/60 px-3.5 py-2.5 font-medium tracking-[0.1em] uppercase text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10 lg:inline-block xl:px-4 ${
+                rtl ? "text-[0.82rem]" : "text-[0.68rem]"
+              }`}
             >
               {ui.navCta.requestConsultation}
             </Link>
