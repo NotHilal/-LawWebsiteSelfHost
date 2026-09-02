@@ -51,7 +51,7 @@
      letter-spacing (which breaks Arabic glyph joining). Uppercase is a no-op
      on Arabic so it can stay. */
   :root[lang="ar"] {
-    --font-sans: "IBM Plex Sans Arabic", "Inter", system-ui, sans-serif;
+    --font-sans: "Cairo", "Inter", system-ui, sans-serif;
     --font-serif: "Amiri", "Cormorant Garamond", Georgia, serif;
   }
 

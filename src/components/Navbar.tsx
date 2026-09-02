@@ -62,7 +62,7 @@ export default function Navbar() {
                 to={item.to}
                 className={({ isActive }) =>
                   `group relative whitespace-nowrap py-1 font-medium tracking-[0.12em] uppercase transition-colors ${
-                    rtl ? "text-[0.9rem]" : "text-[0.7rem]"
+                    rtl ? "text-[1.05rem]" : "text-[0.7rem]"
                   } ${isActive ? "text-summit-gold" : "text-summit-ivory/85 hover:text-summit-ivory"}`
                 }
               >
@@ -84,7 +84,7 @@ export default function Navbar() {
             <Link
               to="/ask-a-question"
               className={`hidden whitespace-nowrap border border-summit-gold/60 px-3.5 py-2.5 font-medium tracking-[0.1em] uppercase text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10 lg:inline-block xl:px-4 ${
-                rtl ? "text-[0.82rem]" : "text-[0.68rem]"
+                rtl ? "text-[0.95rem]" : "text-[0.68rem]"
               }`}
             >
               {ui.navCta.askQuestion}
@@ -92,7 +92,7 @@ export default function Navbar() {
             <Link
               to="/contact"
               className={`hidden whitespace-nowrap border border-summit-gold/60 px-3.5 py-2.5 font-medium tracking-[0.1em] uppercase text-summit-ivory transition-colors duration-300 hover:border-summit-gold hover:bg-summit-gold/10 lg:inline-block xl:px-4 ${
-                rtl ? "text-[0.82rem]" : "text-[0.68rem]"
+                rtl ? "text-[0.95rem]" : "text-[0.68rem]"
               }`}
             >
               {ui.navCta.requestConsultation}
