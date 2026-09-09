@@ -1,20 +1,37 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import fs from "node:fs";
+import path from "node:path";
+import Database from "better-sqlite3";
 import { sendRequestNotification } from "./email.js";
 
-// Uses the service_role key, so it always talks to Postgres directly and
-// bypasses Row Level Security — safe here because this file only ever runs
-// server-side inside the Express API, never in the browser bundle. Never
-// import this from anything under src/.
-let client: SupabaseClient | null = null;
+// Local SQLite file — no external account, nothing that can be deleted for
+// inactivity. Lives outside dist/ and server-dist/ so `npm run build` and
+// redeploys never touch it. Override with DATA_DIR to point at a different
+// (e.g. persistent-volume) location.
+const dataDir = process.env.DATA_DIR || path.resolve(process.cwd(), "data");
+const dbPath = path.join(dataDir, "requests.db");
 
-function db(): SupabaseClient {
+let client: Database.Database | null = null;
+
+function db(): Database.Database {
   if (!client) {
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) {
-      throw new Error("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not configured");
-    }
-    client = createClient(url, key, { auth: { persistSession: false } });
+    fs.mkdirSync(dataDir, { recursive: true });
+    client = new Database(dbPath);
+    client.pragma("journal_mode = WAL");
+    client.exec(`
+      create table if not exists requests (
+        id text primary key,
+        type text not null default 'consultation',
+        name text not null,
+        organization text,
+        title text,
+        email text not null,
+        phone text,
+        interest text,
+        message text not null,
+        read integer not null default 0,
+        created_at text not null
+      )
+    `);
   }
   return client;
 }
@@ -35,6 +52,8 @@ export type ContactRequest = {
   created_at: string;
 };
 
+type RequestRow = Omit<ContactRequest, "read"> & { read: number };
+
 export async function insertRequest(data: {
   id: string;
   type: RequestType;
@@ -47,9 +66,13 @@ export async function insertRequest(data: {
   message: string;
   created_at: string;
 }) {
-  const { error } = await db()
-    .from("requests")
-    .insert({
+  db()
+    .prepare(
+      `insert into requests
+        (id, type, name, organization, title, email, phone, interest, message, created_at)
+       values (@id, @type, @name, @organization, @title, @email, @phone, @interest, @message, @created_at)`,
+    )
+    .run({
       id: data.id,
       type: data.type,
       name: data.name,
@@ -61,7 +84,6 @@ export async function insertRequest(data: {
       message: data.message,
       created_at: data.created_at,
     });
-  if (error) throw error;
 
   // Notify by email. Awaited so failures are logged in order, but
   // sendRequestNotification never throws — a mail failure must not fail the
@@ -80,20 +102,14 @@ export async function insertRequest(data: {
 }
 
 export async function listRequests(): Promise<ContactRequest[]> {
-  const { data, error } = await db()
-    .from("requests")
-    .select("*")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return (data ?? []) as ContactRequest[];
+  const rows = db().prepare(`select * from requests order by created_at desc`).all() as RequestRow[];
+  return rows.map((r) => ({ ...r, read: !!r.read }));
 }
 
 export async function markRequestRead(id: string, read: boolean) {
-  const { error } = await db().from("requests").update({ read }).eq("id", id);
-  if (error) throw error;
+  db().prepare(`update requests set read = ? where id = ?`).run(read ? 1 : 0, id);
 }
 
 export async function deleteRequest(id: string) {
-  const { error } = await db().from("requests").delete().eq("id", id);
-  if (error) throw error;
+  db().prepare(`delete from requests where id = ?`).run(id);
 }

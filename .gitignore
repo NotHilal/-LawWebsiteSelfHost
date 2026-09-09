@@ -34,3 +34,7 @@ dist-ssr
 # Server build output
 server-dist
 email-preview.html
+
+# Local SQLite request store (server/lib/db.ts) — persists on the server,
+# never committed.
+/data

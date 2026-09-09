@@ -12,8 +12,9 @@ browser ──▶ Express (server-dist/index.js)
               └─ everything else      static dist/ + SPA fallback
 ```
 
-External services (unchanged): **Supabase** (database), **Gemini** (chatbot),
-**SMTP mailbox** (new-request notification emails).
+Client requests are stored locally in a SQLite file (`data/requests.db`) —
+nothing to provision, nothing that can expire. External services: **Gemini**
+(chatbot) and an **SMTP mailbox** (new-request notification emails).
 
 ---
 
@@ -28,7 +29,7 @@ these in cPanel → *Setup Node.js App* → *Environment variables* instead of a
 | `PUBLIC_BASE_URL` | your final URL, e.g. `https://www.summitconsultancy.com` |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | you choose — the `/admin` login |
 | `JWT_SECRET` | any long random string (`openssl rand -base64 48`) |
-| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Supabase dashboard → Settings → API |
+| `DATA_DIR` | optional — where `requests.db` (SQLite) is stored. Defaults to `./data` next to the server process |
 | `GOOGLE_API_KEY` | Google AI Studio |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | a mailbox you create in cPanel → Email Accounts (→ *Connect Devices* shows host/ports) |
 | `NOTIFICATION_EMAIL` | inbox that should receive alerts (any address) |
@@ -82,6 +83,11 @@ Put Cloudflare (free) in front for CDN + DDoS protection.
 ```bash
 git pull && npm ci && npm run build && npm start   # or: systemctl restart summit
 ```
+
+`data/` (the SQLite file) is untracked and lives outside `dist/`/`server-dist/`,
+so none of the above touches it — client requests survive redeploys. Just
+don't delete or move that folder, and include it in whatever you use to back
+up the server.
 
 ---
 
