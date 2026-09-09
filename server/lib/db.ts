@@ -1,22 +1,22 @@
 import fs from "node:fs";
 import path from "node:path";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { sendRequestNotification } from "./email.js";
 
-// Local SQLite file — no external account, nothing that can be deleted for
-// inactivity. Lives outside dist/ and server-dist/ so `npm run build` and
-// redeploys never touch it. Override with DATA_DIR to point at a different
-// (e.g. persistent-volume) location.
+// Local SQLite file via Node's built-in node:sqlite — no external account,
+// nothing that can be deleted for inactivity, and no separate native binary
+// to mismatch against the host's glibc (unlike better-sqlite3's prebuilds).
+// Lives outside dist/ and server-dist/ so `npm run build` and redeploys
+// never touch it. Override with DATA_DIR to point at a different location.
 const dataDir = process.env.DATA_DIR || path.resolve(process.cwd(), "data");
 const dbPath = path.join(dataDir, "requests.db");
 
-let client: Database.Database | null = null;
+let client: DatabaseSync | null = null;
 
-function db(): Database.Database {
+function db(): DatabaseSync {
   if (!client) {
     fs.mkdirSync(dataDir, { recursive: true });
-    client = new Database(dbPath);
-    client.pragma("journal_mode = WAL");
+    client = new DatabaseSync(dbPath);
     client.exec(`
       create table if not exists requests (
         id text primary key,
@@ -70,20 +70,20 @@ export async function insertRequest(data: {
     .prepare(
       `insert into requests
         (id, type, name, organization, title, email, phone, interest, message, created_at)
-       values (@id, @type, @name, @organization, @title, @email, @phone, @interest, @message, @created_at)`,
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
-    .run({
-      id: data.id,
-      type: data.type,
-      name: data.name,
-      organization: data.organization || null,
-      title: data.title || null,
-      email: data.email,
-      phone: data.phone || null,
-      interest: data.interest || null,
-      message: data.message,
-      created_at: data.created_at,
-    });
+    .run(
+      data.id,
+      data.type,
+      data.name,
+      data.organization || null,
+      data.title || null,
+      data.email,
+      data.phone || null,
+      data.interest || null,
+      data.message,
+      data.created_at,
+    );
 
   // Notify by email. Awaited so failures are logged in order, but
   // sendRequestNotification never throws — a mail failure must not fail the
@@ -102,7 +102,7 @@ export async function insertRequest(data: {
 }
 
 export async function listRequests(): Promise<ContactRequest[]> {
-  const rows = db().prepare(`select * from requests order by created_at desc`).all() as RequestRow[];
+  const rows = db().prepare(`select * from requests order by created_at desc`).all() as unknown as RequestRow[];
   return rows.map((r) => ({ ...r, read: !!r.read }));
 }
 
